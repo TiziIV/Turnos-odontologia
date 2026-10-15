@@ -268,13 +268,13 @@ Se distinguen tres capas:
 3. **Agenda genérica / multi-rubro**: Reservo y AgendaPro. No son odontológicos; sirven como
    referencia de UX de reservas y de modelo de precios, no como competidores directos.
 
-### Qué hace (casi) todo el mundo
+### Estándar de mercado
 
 Reserva/agendamiento online, recordatorios automáticos (WhatsApp/SMS/email), agenda digital y
 multi-profesional aparecen en la gran mayoría de las notas. Son **features de entrada**, no
 diferenciadores: cualquiera que evalúe el mercado las da por sentadas.
 
-### Qué NO evidencia casi nadie (el hueco)
+### Diferenciadores reales y vacíos del mercado argentino
 
 El hueco competitivo está en el **corazón operativo del agendamiento odontológico**:
 
@@ -315,7 +315,7 @@ detectados donde hay precio público: DentalSoft ARS 30.000–60.000; AgendaPro 
 OdontoSaaS) cobra por cotización ("solicitar demo"), típico de venta B2B enterprise. Los planes
 "Gratis/prueba" existen como gancho (DentalSoft 3 meses, Doctocliq free, pruebas de 7–30 días).
 
-### Riesgo competitivo y ventana de oportunidad
+### Oportunidades de innovación
 
 El riesgo es que vendors enterprise (Dentalink/Medilink) o genéricos baratos (Reservo,
 AgendaPro) ya cubren reserva online y recordatorios, y que los dentales puros (XDental,

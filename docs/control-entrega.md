@@ -17,7 +17,7 @@ Revisión: 2026-10-15. Este documento distingue requisitos de resultados comprob
 - [x] Capturas originales de etapas 0–5 y Ajustar de la matriz presentes en `docs/evidencias/`.
 - [x] Revisar ajuste autorizado a Python/FastAPI/SQLAlchemy/PostgreSQL y pytest; AGENTS.md y CLAUDE.md idénticos, JSON válido e historia Discovery conservada. Ver `decisiones/ajuste-stack-python.md`.
 - [x] Resolver alcance mínimo del primer change frente a dependencias pendientes del roadmap: excepción académica aprobada, C-06 será el primer change entregado; capacidades completas anteriores siguen pendientes.
-- [ ] Comprobar entorno ejecutable y acceso al flujo de orquestación y a Engram.
+- [x] Comprobar entorno ejecutable y acceso al flujo de orquestación y a Engram. Pytest 74 passed el 2026-10-15. Engram recuperó el recuerdo #3 y el intervalo semiabierto.
 
 ## Change crear-turno-anti-solapamiento
 
@@ -31,7 +31,7 @@ Revisión: 2026-10-15. Este documento distingue requisitos de resultados comprob
 - [x] Apply: implementar únicamente el alcance revisado, con tests trazables a reglas y escenarios.
 - [x] Verify: ejecutar pytest y comprobaciones pertinentes; guardar salida y captura real del resultado satisfactorio.
 - [x] README: instalación y ejecución reproducibles desde un clon nuevo.
-- [ ] Archive: sincronizar specs, archivar con OpenSpec y actualizar roadmap; guardar captura real. Spec y archive ya ejecutados el 2026-10-15. Falta `docs/evidencias/etapa-6-archive.png`.
+- [x] Archive: sincronizar specs, archivar con OpenSpec y actualizar roadmap; captura en `docs/evidencias/etapa-6-archive.png`.
 - [x] Engram: guardar decisiones reales y recuperar contexto en una sesión posterior; registrar consulta, respuesta y captura (`docs/evidencias/etapa-7-engram-consulta.png`).
 
 Los registros de terminal complementan las capturas; no las reemplazan. No generar imágenes que aparenten ejecuciones ni marcar evidencia pendiente como existente.
@@ -48,7 +48,7 @@ Los registros de terminal complementan las capturas; no las reemplazan. No gener
 
 ## Reflexión, video y participación
 
-Integrantes informados: Juan Martín García y Tiziano Valentini. Juan confirmó que no dispone de un registro de verificación personal de cinco fuentes; se realizará con los integrantes antes de acreditarlo en el informe.
+Integrantes: García Juan Martín y Tiziano Valentini. La verificación de cinco fuentes está en el informe. La reflexión escrita la redactan los integrantes.
 
 - [ ] Reflexión de 1–2 páginas escrita por los integrantes, revisada con asistencia si lo desean.
 - [ ] Responder: información incorrecta/no verificable del Discovery y cómo se detectó; Ajustar y consecuencia de continuar; spec aprobada frente a prompt suelto; mayor/menor aporte de la fundación; participación de cada integrante.
@@ -61,6 +61,6 @@ Integrantes informados: Juan Martín García y Tiziano Valentini. Juan confirmó
 - [ ] Revisión final de datos ficticios, ausencia de secretos y accesibilidad del repositorio/video.
 - [ ] Entregar repositorio y enlace de YouTube en el campus el viernes 16/10/2026, según anuncio del profesor para C3/C4.
 
-## Estado al iniciar esta revisión
+## Estado al cerrar el ciclo
 
-La fundación proviene del commit `03a2848`, de TiziIV. OpenSpec no lista changes activos. No hay implementación ni tests ejecutables todavía. Engram está instalado, pero la consulta inicial de «solapamiento» para `turnos-odontologia` no encontró recuerdos. No se ha acreditado recuperación de una sesión anterior.
+La fundación sigue en el commit de TiziIV. El change está archivado, la spec vigente es `openspec/specs/reserva-turnos/spec.md` y la suite local terminó en 74 passed. Falta la reflexión escrita por los integrantes, el video en YouTube y publicar esta rama: `origin/main` todavía apunta solo a la fundación.
