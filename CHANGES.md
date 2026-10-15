@@ -259,7 +259,7 @@ Paso │ Agente A (Núcleo de agenda)      │ Agente B (Agenda auxiliar)       
 ---
 
 ### [C-06] ⭐ `crear-turno-anti-solapamiento` — CHANGE PRIORITARIO
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` entrega académica archivada el 2026-10-15 en `openspec/changes/archive/2026-10-15-crear-turno-anti-solapamiento`. Spec vigente: `openspec/specs/reserva-turnos/spec.md`. Entregado: `POST /api/public/turnos`, dominio puro, memoria, pytest. Siguen pendientes el mostrador, la persistencia y la concurrencia PostgreSQL del scope completo.
 - **Scope de la entrega académica aprobada**: crear turnos con recurso doble y anti-solapamiento estricto, con API FastAPI, modelos/puertos puros, fixtures sintéticos y tests pytest. Incluye el scaffolding imprescindible y repositorios en memoria para una demostración local; no ofrece persistencia durable ni garantía concurrente PostgreSQL. CRUDs completos, login/RBAC e integraciones quedan fuera.
 - **Scope del producto completo (referencia futura)**: creación transaccional de turno con recurso doble y anti-solapamiento estricto; los contratos siguientes orientan la especificación, sin acreditar implementadas sus capacidades de persistencia/seguridad:
   - Regla de dominio `RecursoDoble`: un turno requiere `Profesional` libre **Y** `Sillon` libre en `[inicio, fin)` (RN-01)
