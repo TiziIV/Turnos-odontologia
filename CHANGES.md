@@ -4,13 +4,17 @@
 > Cada change es atómico: un agente puede implementarlo en una sesión (~4-6 horas).
 > **Leer este archivo antes de ejecutar cualquier `/opsx:propose`.**
 
-> **Ancla del MVP:** `C-06 crear-turno-anti-solapamiento` es el **change prioritario**. Es el primer change funcional del núcleo de agenda y el corazón del sistema: un turno que exige simultáneamente un `Profesional` libre **y** un `Sillon/box` libre en la franja, con duración derivada de la prestación y anti-solapamiento estricto (`fin == inicio` permitido). Los changes `C-01` y `C-02` son cimientos obligatorios y `C-03`/`C-04`/`C-05` **+ `C-05b`** (alta mínima de pacientes) sus prerequisitos directos de catálogo.
+> **Ancla del MVP:** `C-06 crear-turno-anti-solapamiento` es el **change prioritario**. Es el primer change funcional del núcleo de agenda y el corazón del sistema: un turno que exige simultáneamente un `Profesional` libre **y** un `Sillon/box` libre en la franja, con duración derivada de la prestación y anti-solapamiento estricto (`fin == inicio` permitido). En el roadmap del producto completo, `C-01`/`C-02` son cimientos y `C-03`/`C-04`/`C-05` **+ `C-05b`** son prerequisitos de catálogo. Para la entrega única rige la excepción académica aprobada abajo.
 
 ---
 
+> **Ajuste documental 2026-10-15:** stack Python/FastAPI/pytest confirmado por el usuario. Ver [decisión](docs/decisiones/ajuste-stack-python.md). Ningún change se completa con esta corrección.
+>
+> **Excepción académica aprobada el 2026-10-15:** C-06 `crear-turno-anti-solapamiento` será el **primer change entregado**, conservando su ID histórico. Incluye la base mínima necesaria: API FastAPI, dominio/modelos/puertos, datos sintéticos y pytest. La demostración local usa repositorios en memoria y no acredita persistencia ni concurrencia PostgreSQL. C-01/C-02 y C-03/C-04/C-05/C-05b siguen pendientes como capacidades completas; no requieren un archive previo para esta entrega acotada. CRUDs completos, login/RBAC e integraciones quedan para después. PostgreSQL/SQLAlchemy/Alembic siguen como diseño futuro si no están implementados. El alcance debe reflejarse en Explore/Propose y sus tareas antes de Apply.
+
 ## Cómo usar este documento
 
-1. Identificar el change a implementar (verificar que sus dependencias están en `openspec/changes/archive/`).
+1. Identificar el change a implementar y verificar dependencias archivadas; para la entrega académica de C-06 aplicar la excepción aprobada y documentar su base mínima incluida.
 2. Leer los docs de la knowledge-base indicados en "Leer antes".
 3. Ejecutar `/opsx:propose <nombre-del-change>`.
 4. Al terminar el change, archivarlo con `/opsx:archive <nombre-del-change>`.
@@ -19,6 +23,8 @@
 ---
 
 ## Árbol de dependencias
+
+El árbol, gates y camino crítico siguientes corresponden al **producto completo**. La entrega académica única comienza por C-06 con la base mínima incluida, según la excepción aprobada; no renumera ni completa los otros changes.
 
 ```
 C-01 foundation-setup
@@ -134,12 +140,12 @@ Paso │ Agente A (Núcleo de agenda)      │ Agente B (Agenda auxiliar)       
 ### [C-01] `foundation-setup`
 - **Estado**: `[ ]` pendiente
 - **Scope**: Scaffolding del proyecto + infraestructura base (un solo módulo, paquetes por capa)
-  - `pom.xml` (Maven) con Java 21, Spring Boot 3.x (web, validation, data-jpa), Flyway, driver PostgreSQL, H2 (test), JUnit 5 + AssertJ + Mockito
+  - `pyproject.toml` con Python 3.12+, FastAPI, Pydantic, SQLAlchemy, Alembic, driver PostgreSQL y pytest; versiones a fijar y documentar al implementar
   - Estructura hexagonal: `domain/model`, `domain/rule`, `domain/exception`, `domain/port`, `application/service`, `application/dto`, `infrastructure/persistence`, `infrastructure/scheduler`, `api/controller`, `api/dto`, `api/security`
-  - Perfiles: `application.yml`, `application-test.yml` (H2 en memoria), `application-prod.yml` (PostgreSQL); Flyway inicializado en `db/migration`
+  - Configuración por variables de entorno; unitarios con fakes e integración con PostgreSQL real; Alembic inicializado en `alembic/versions/`
   - `docker-compose.yml` (PostgreSQL 15+ con extensión `btree_gist` + app) y `.env.example` con las variables de `08` — sin secretos versionados
-  - Endpoint `GET /api/health`; CI (GitHub Actions) con `mvn test` + check de datos sintéticos en seeds/fixtures (RN-06)
-  - Tests: smoke de contexto Spring + health
+  - Endpoint `GET /api/health`; CI (GitHub Actions) con `python -m pytest` + check de datos sintéticos en seeds/fixtures (RN-06)
+  - Tests: smoke de arranque de FastAPI + health
 - **Dependencias**: ninguna
 - **Governance**: BAJO
 - **RN-XX**: RN-06 (CI guardrail de datos sintéticos)
@@ -158,10 +164,10 @@ Paso │ Agente A (Núcleo de agenda)      │ Agente B (Agenda auxiliar)       
   - Value object `FranjaHoraria` (intervalo semiabierto `[inicio, fin)`) con validación `inicio < fin`
   - Enums: `EstadoTurno` (PENDIENTE/CONFIRMADO/CANCELADO/REALIZADO/AUSENTE), `CanalTurno` (ONLINE/MOSTRADOR), `Rol`, `EstadoRecordatorio`
   - Puertos de repositorio (`domain/port`): `TurnoRepository`, `ProfesionalRepository`, `SillonRepository`, `PrestacionRepository`, `PacienteRepository`, `UsuarioRepository`, `RecordatorioRepository`
-  - Adaptadores JPA + mappers (dominio ↔ entidad) en `infrastructure/persistence`; `@Version` en `Turno` (locking optimista)
+  - Adaptadores SQLAlchemy + mappers (dominio ↔ ORM) en `infrastructure/persistence`; columna de versión (`version_id_col`) en el adaptador de `Turno` (locking optimista)
   - Migración 001: tablas `usuario, paciente, profesional, sillon, prestacion, turno, recordatorio`; índices `(profesional_id, inicio, fin)`, `(sillon_id, inicio, fin)`
   - Seed sintético (RN-06): sillones BOX-1/BOX-2, prestaciones LIMPIEZA(30)/CONSULTA(20)/ENDO(60)/EXTRACCION(40), profesionales y pacientes ficticios (`@example.test`, documentos `0000000X`)
-  - Tests: `@DataJpaTest` con H2 (repositorios + mappers), test de convenciones de seed (dominio `.test`), cálculo derivado de `fin`
+  - Tests: pytest con PostgreSQL real (repositorios + mappers), test de convenciones de seed (dominio `.test`), cálculo derivado de `fin`
 - **Dependencias**: C-01
 - **Governance**: CRITICO
 - **RN-XX**: RN-13, RN-09 (criterio de turno activo modelado), RN-06
@@ -176,7 +182,7 @@ Paso │ Agente A (Núcleo de agenda)      │ Agente B (Agenda auxiliar)       
 
 ## FASE 1 — Núcleo de agenda (CAMINO CRÍTICO / MVP)
 
-> Estas changes de catálogo y alta mínima de pacientes (`C-03`, `C-04`, `C-05`, `C-05b`) se proponen en paralelo. `C-06` es el **change prioritario** y no puede proponerse hasta que las cuatro estén archivadas.
+> Estas changes de catálogo y alta mínima de pacientes (`C-03`, `C-04`, `C-05`, `C-05b`) se proponen en paralelo. `C-06` es el **change prioritario**. Para el producto completo requiere las cuatro archivadas; para la entrega académica única se aplica la excepción aprobada con fixtures sintéticos y base mínima propia.
 
 ### [C-03] `gestionar-prestaciones`
 - **Estado**: `[ ]` pendiente
@@ -254,7 +260,8 @@ Paso │ Agente A (Núcleo de agenda)      │ Agente B (Agenda auxiliar)       
 
 ### [C-06] ⭐ `crear-turno-anti-solapamiento` — CHANGE PRIORITARIO
 - **Estado**: `[ ]` pendiente
-- **Scope**: Núcleo del dominio — creación transaccional de turno con recurso doble y anti-solapamiento estricto
+- **Scope de la entrega académica aprobada**: crear turnos con recurso doble y anti-solapamiento estricto, con API FastAPI, modelos/puertos puros, fixtures sintéticos y tests pytest. Incluye el scaffolding imprescindible y repositorios en memoria para una demostración local; no ofrece persistencia durable ni garantía concurrente PostgreSQL. CRUDs completos, login/RBAC e integraciones quedan fuera.
+- **Scope del producto completo (referencia futura)**: creación transaccional de turno con recurso doble y anti-solapamiento estricto; los contratos siguientes orientan la especificación, sin acreditar implementadas sus capacidades de persistencia/seguridad:
   - Regla de dominio `RecursoDoble`: un turno requiere `Profesional` libre **Y** `Sillon` libre en `[inicio, fin)` (RN-01)
   - Regla de dominio `AntiSolapamiento`: solapamiento estricto prohibido; `fin == inicio` **permitido** (encadenado exacto) (RN-03)
   - Cálculo `fin = inicio + prestacion.duracionMinutos`; rechazo de duración manual (RN-02)
@@ -262,8 +269,8 @@ Paso │ Agente A (Núcleo de agenda)      │ Agente B (Agenda auxiliar)       
   - Caso de uso `CrearTurnoService` **transaccional**: revalida disponibilidad al confirmar, considera sólo turnos activos (RN-09), persiste `Turno` (estado PENDIENTE/CONFIRMADO, canal ONLINE/MOSTRADOR)
   - Endpoints `POST /api/public/turnos` (invitado, canal ONLINE) y `POST /api/turnos` (mostrador, canal MOSTRADOR); `409 Conflict` si un recurso está ocupado, `422` si intervalo/prestación inválidos
   - Validación de existencia del paciente referenciado (`pacienteId` debe existir; `422` si no) — costura con la alta mínima de `C-05b`
-  - Tests unitarios de dominio (JUnit 5 + AssertJ, sin Spring): profesional ocupado + sillón libre ⇒ rechazo; profesional libre + sillón ocupado ⇒ rechazo; ambos libres ⇒ éxito; límite `fin(A) == inicio(B)` ⇒ éxito; `inicio(B) = fin(A) − 1 min` ⇒ rechazo (sobre profesional y sobre sillón por separado); test parametrizado de duración por prestación (RN-02); `inicio >= fin` ⇒ rechazo (RN-13)
-- **Dependencias**: C-03, C-04, C-05, C-05b
+  - Tests unitarios de dominio (pytest puro, sin FastAPI ni ORM): profesional ocupado + sillón libre ⇒ rechazo; profesional libre + sillón ocupado ⇒ rechazo; ambos libres ⇒ éxito; límite `fin(A) == inicio(B)` ⇒ éxito; `inicio(B) = fin(A) − 1 min` ⇒ rechazo (sobre profesional y sobre sillón por separado); test parametrizado de duración por prestación (RN-02); `inicio >= fin` ⇒ rechazo (RN-13)
+- **Dependencias**: producto completo: C-03, C-04, C-05, C-05b (y C-01/C-02 transitivas). Entrega académica: sin changes previos archivados, por excepción aprobada; C-06 incorpora sólo la base mínima y fixtures necesarios. Las capacidades completas de esos IDs siguen pendientes.
 - **Governance**: CRITICO
 - **RN-XX**: RN-01, RN-02, RN-03, RN-13 (+ RN-09)
 - **Leer antes**:
@@ -390,10 +397,10 @@ Paso │ Agente A (Núcleo de agenda)      │ Agente B (Agenda auxiliar)       
 - **Estado**: `[ ]` pendiente
 - **Scope**: Garantía dura contra la doble reserva concurrente (online vs. mostrador)
   - Locking pesimista por recurso+franja dentro de la transacción de creación (lock adoptivo sobre `(recursoId, fecha)` / `SELECT ... FOR UPDATE`)
-  - Locking optimista con `@Version` en `Turno`; traducción de `OptimisticLockException` a error de dominio controlado
+  - Locking optimista con columna de versión SQLAlchemy en `Turno`; traducción de `StaleDataError` a error de dominio controlado
   - Migración: constraint de exclusión PostgreSQL `EXCLUDE USING gist (profesional_id WITH =, tsrange(inicio, fin, '[)') WITH &&) WHERE (estado IN ('PENDIENTE','CONFIRMADO'))` y análogo para `sillon_id`; extensión `btree_gist`
   - Traducción de `23P01 exclusion_violation` a `409 Conflict` (no excepción cruda de base)
-  - Tests de concurrencia (dos hilos/transacciones sobre la misma franja ⇒ una gana, otra rechazo controlado, RN-16) con H2 + locking; tests del constraint con Testcontainers PostgreSQL
+  - Tests de concurrencia (dos hilos/transacciones sobre la misma franja ⇒ una gana, otra rechazo controlado, RN-16) sobre PostgreSQL real; tests del constraint con PostgreSQL (Docker Compose o Testcontainers para Python). Los fakes unitarios no prueban esta garantía
 - **Dependencias**: C-06, C-08, C-09
 - **Governance**: CRITICO
 - **RN-XX**: RN-16, RN-01, RN-03

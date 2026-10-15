@@ -2,14 +2,18 @@
 
 **Delegator use only.** Índice de resolución para la fase `apply`: dado un change, resolver qué skill(s) aplican y qué reglas compactas inyectar en el prompt del sub-agente. Los sub-agentes NO leen este archivo ni los `SKILL.md` — reciben las reglas ya resueltas en su launch prompt.
 
-- **Proyecto:** turnos-odontologia (backend puro Java 21 + Spring Boot 3 + PostgreSQL)
+- **Proyecto:** turnos-odontologia (backend puro Python 3.12+ + FastAPI + PostgreSQL)
 - **Fecha:** 2026-10-15
 - **Generado por:** skill-registry
 - **Change ancla:** C-06 (`crear-turno-anti-solapamiento`)
 
 ---
 
-## ⚠️ Nota operativa — gotcha de skills externas
+## Historia de la fundación anterior — no son instrucciones activas
+
+La nota y los paths siguientes describen el entorno original; no se verificó que estén disponibles en esta máquina. Las skills Java están obsoletas para Python. No se instaló ninguna skill nueva.
+
+### Nota operativa heredada
 
 Las 3 skills de dominio (`java-springboot`, `java-junit`, `postgresql-table-design`) **NO** están en `~/.config/opencode/skills/` sino en `~/.agents/skills/` (store canónico cross-agent del instalador). OpenCode las levanta igual porque escanea `~/.agents/skills/**/SKILL.md` como *external skills*.
 
@@ -33,8 +37,8 @@ Las 3 skills de dominio (`java-springboot`, `java-junit`, `postgresql-table-desi
 | 7 | `skill-creator` | flujo | local `~/.config/opencode/skills` | `~/.config/opencode/skills/skill-creator/SKILL.md` | crear skills nuevas (gaps repetibles) |
 | 8 | `skill-registry` | flujo | local `~/.config/opencode/skills` | `~/.config/opencode/skills/skill-registry/SKILL.md` | este registro |
 | 9 | `web-scraper` | flujo | local `~/.config/opencode/skills` | `~/.config/opencode/skills/web-scraper/SKILL.md` | investigar competidores por URL |
-| 10 | `java-springboot` | **dominio** | external `github/awesome-copilot` | `~/.agents/skills/java-springboot/SKILL.md` | C-01, C-02, C-03, C-04, C-05, C-05b, C-06, C-08 |
-| 11 | `java-junit` | **dominio** | external `github/awesome-copilot` | `~/.agents/skills/java-junit/SKILL.md` | **C-06 ★**, C-02 |
+| 10 | `java-springboot` | **histórico / obsoleto** | external `github/awesome-copilot` | `~/.agents/skills/java-springboot/SKILL.md` | Ningún change vigente |
+| 11 | `java-junit` | **histórico / obsoleto** | external `github/awesome-copilot` | `~/.agents/skills/java-junit/SKILL.md` | Ningún change vigente |
 | 12 | `postgresql-table-design` | **dominio** | external `wshobson/agents` | `~/.agents/skills/postgresql-table-design/SKILL.md` | C-02, **C-13** |
 | 13 | `openspec-propose` | infra (OPSX) | proyecto `.opencode/skills` | `.opencode/skills/openspec-propose/SKILL.md` | `/opsx:propose` de todo change |
 | 14 | `openspec-apply-change` | infra (OPSX) | proyecto `.opencode/skills` | `.opencode/skills/openspec-apply-change/SKILL.md` | fase apply de todo change |
@@ -50,9 +54,9 @@ Las 3 skills de dominio (`java-springboot`, `java-junit`, `postgresql-table-desi
 
 ## Reglas compactas — skills de dominio
 
-Copiar el bloque que corresponda al change en el prompt del sub-agente como `## Project Standards (auto-resolved)`.
+Los bloques Java quedan sólo como registro histórico. Para Python usar las convenciones vigentes abajo, no inyectar los bloques obsoletos.
 
-### java-springboot  → C-01, C-02, C-03, C-04, C-05, C-05b, C-06, C-08
+### java-springboot — HISTÓRICO / NO APLICAR
 - Inyección **por constructor**; campos de dependencia `private final`.
 - Estereotipos correctos: `@RestController` (web), `@Service` (lógica), `@Repository` (persistencia).
 - **DTOs** en `api/dto`; NUNCA exponer entidades JPA al cliente.
@@ -65,7 +69,7 @@ Copiar el bloque que corresponda al change en el prompt del sub-agente como `## 
 - Tests: `@SpringBootTest` (integración), `@WebMvcTest` (controllers), `@DataJpaTest` (repos).
 - **Nota de conflicto:** la skill sugiere organizar por **feature/dominio**, pero el proyecto exige **hexagonal por capa** (`domain/application/infrastructure`). Prevalecen las convenciones del proyecto (§Convenciones 4).
 
-### java-junit  → C-06 ★, C-02
+### java-junit — HISTÓRICO / NO APLICAR
 - JUnit 5 puro; tests en `src/test/java`; `mvn test`.
 - Clases de test con sufijo `Test`; patrón Arrange-Act-Assert (AAA).
 - Naming: `methodName_should_expectedBehavior_when_scenario`.
@@ -95,38 +99,40 @@ Los 6 gaps de `find_skill.gaps_sin_candidata` no tienen skill candidata; se cubr
 | # | Change(s) | Convención | Dónde vive |
 |---|-----------|-----------|------------|
 | 1 | C-13 | Constraint `EXCLUDE USING gist (profesional_id WITH =, tsrange(inicio,fin,'[)') WITH &&) WHERE (estado IN ('PENDIENTE','CONFIRMADO'))` + análogo para `sillon_id`; extensión `btree_gist`; traducir SQLSTATE `23P01` a **`409 Conflict`** | `knowledge-base/08_arquitectura_propuesta.md` §Manejo de concurrencia · `knowledge-base/09_decisiones_y_supuestos.md` DD-06, DD-08 |
-| 2 | C-13 | Tests del constraint con **Testcontainers PostgreSQL** — H2 **no** soporta `EXCLUDE USING gist`; los tests de doble reserva exigen un PostgreSQL real | `knowledge-base/08_arquitectura_propuesta.md` §Manejo de concurrencia · CHANGES.md C-13 |
-| 3 | C-13 | Locking pesimista (adoptivo `SELECT ... FOR UPDATE` por `(recursoId, fecha)`) + optimista (`@Version` en `Turno`); traducir `OptimisticLockException` a error de dominio controlado (**no** excepción cruda de base) | `knowledge-base/08_arquitectura_propuesta.md` §Manejo de concurrencia |
+| 2 | C-13 | Tests del constraint con **PostgreSQL real** (Docker Compose o Testcontainers para Python); los fakes no prueban constraints ni doble reserva concurrente | `knowledge-base/08_arquitectura_propuesta.md` §Manejo de concurrencia · CHANGES.md C-13 |
+| 3 | C-13 | Locking pesimista (adoptivo `SELECT ... FOR UPDATE` por `(recursoId, fecha)`) + optimista (columna de versión SQLAlchemy en `Turno`); traducir `StaleDataError` a error de dominio controlado (**no** excepción cruda de base) | `knowledge-base/08_arquitectura_propuesta.md` §Manejo de concurrencia |
 | 4 | C-01, C-02 | Arquitectura **hexagonal limpia** por capa: `domain/model`, `domain/rule`, `domain/exception`, `domain/port`, `application/service`, `application/dto`, `infrastructure/{persistence,scheduler}`, `api/{controller,dto,security}`; **el dominio no depende de frameworks** | `knowledge-base/08_arquitectura_propuesta.md` §Estructura de directorios / §Patrones |
 | 5 | C-01 | Guardrail de CI para datos sintéticos (**RN-06**): check en GitHub Actions sobre seeds/fixtures — dominios `@example.test`, documentos `0000000X`; prohibido versionar datos sensibles reales | `knowledge-base/05_reglas_de_negocio.md` §RN-06 · CHANGES.md C-01 |
 | 6 | C-17, C-18, C-19 | Integraciones externas (WhatsApp Business API, Mercado Pago, Google Calendar) **fuera del MVP**; reevaluar en Fase 4 | `knowledge-base/02_descripcion_general.md` §Integraciones externas · `knowledge-base/10_preguntas_abiertas.md` |
 
 ---
 
-## Cómo usarlo — dado el change X, cargar estas reglas
+## Resolución vigente tras el ajuste a Python
 
-| Change | Skills a inyectar | Convenciones a inyectar |
-|--------|-------------------|-------------------------|
-| C-01 | `java-springboot` | 4 (hexagonal), 5 (guardrail CI / RN-06) |
-| C-02 | `java-springboot`, `java-junit`, `postgresql-table-design` | 4 (hexagonal) |
-| C-03 | `java-springboot` | — |
-| C-04 | `java-springboot` | — |
-| C-05 | `java-springboot` | — |
-| C-05b | `java-springboot` | 5 (RN-06, datos sintéticos) |
-| **C-06 ★** | `java-springboot`, **`java-junit`** | — |
-| C-07 | `java-springboot` | — |
-| C-08 | `java-springboot` | — |
-| C-09 | `java-springboot` | — |
-| C-10 | `java-springboot` | — |
-| C-11 | `java-springboot` | — |
-| C-12 | `java-springboot` | — |
-| C-13 | `java-springboot`, `postgresql-table-design` | **1, 2, 3** (constraint GiST + Testcontainers + locking) |
-| C-14 | `java-springboot` | — |
-| C-15 | `java-springboot` | — |
-| C-16 | `java-springboot` | 5 (RN-06 / RN-LG) |
-| C-17 | `java-springboot` | 6 (fuera del MVP) |
-| C-18 | `java-springboot` | 6 (fuera del MVP) |
-| C-19 | `java-springboot` | 6 (fuera del MVP) |
-| Todos | `openspec-propose` / `openspec-apply-change` / `openspec-archive-change` (infra) | — |
+- Para backend y tests: aplicar KB 02/08, AGENTS.md y las convenciones de este proyecto. No hay una skill Python instalada o validada por este ajuste.
+- Para C-02/C-13: `postgresql-table-design` sólo si se confirma su disponibilidad; la KB define los contratos del proyecto.
+- Para OPSX: usar las skills del proyecto según su fase y comprobar la herramienta disponible antes de ejecutarla.
+- `java-springboot` y `java-junit` no se asignan a ningún change vigente.
 
-> Recordar el gotcha: si las skills de dominio no están cargadas (sin reinicio), usar las reglas compactas de §Skills de dominio directamente en el prompt.
+### Convenciones Python del proyecto (no una skill instalada)
+- Mantener dominio Python puro y puertos independientes de framework.
+- Pydantic en frontera API, SQLAlchemy en infraestructura, migraciones Alembic.
+- Usar pytest para cada escenario, con tests parametrizados de duración y borde.
+- Casos mínimos: ambos recursos libres; uno ocupado; inicio igual al fin anterior.
+- No confundir fakes unitarios con pruebas de PostgreSQL ni afirmar RN-16 verificada sin integración real.
+- Registrar versiones efectivas y comandos reproducibles al implementar.
+
+## Fuentes de convenciones
+
+| Archivo | Uso |
+|---|---|
+| `AGENTS.md` / `CLAUDE.md` | Instrucciones sincronizadas |
+| `knowledge-base/README.md` | Índice de los diez canónicos |
+| `knowledge-base/02_descripcion_general.md` | Stack vigente |
+| `knowledge-base/04_modelo_de_datos.md` | Modelo y tipos |
+| `knowledge-base/05_reglas_de_negocio.md` | RN-01 a RN-16 |
+| `knowledge-base/08_arquitectura_propuesta.md` | Capas y límites de tests |
+| `knowledge-base/09_decisiones_y_supuestos.md` | Decisiones vigentes |
+| `knowledge-base/10_preguntas_abiertas.md` | Pendientes de alcance y dominio |
+| `CHANGES.md` | Dependencias pendientes |
+| `docs/decisiones/ajuste-stack-python.md` | Origen y alcance de la corrección |

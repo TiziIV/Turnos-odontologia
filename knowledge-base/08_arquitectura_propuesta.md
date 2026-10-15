@@ -5,70 +5,59 @@
 | Patrón | Dónde se usa | Por qué |
 |---|---|---|
 | Arquitectura en capas / **hexagonal** | Separación dominio / aplicación / infraestructura | Aísla las reglas `RN-NN` del framework y de la base, habilitando tests unitarios puros de dominio |
-| Puertos y adaptadores | Repositorios y clientes externos como interfaces | Permite sustituir PostgreSQL por H2 en tests y mockear WhatsApp/MercadoPago |
+| Puertos y adaptadores | Repositorios y clientes externos como interfaces | Permite fakes para tests unitarios y adaptadores externos; la integración de persistencia requiere PostgreSQL |
 | Transacción por caso de uso | Creación/cancelación/reprogramación de turnos | Garantiza atomicidad del recurso doble |
-| Locking optimista + pesimista | Entidad `Turno` (`@Version`) y bloqueo de franja de recursos | Resuelve el agendamiento concurrente |
+| Locking optimista + pesimista | Adaptador SQLAlchemy de `Turno` (columna de versión) y bloqueo de franja de recursos | Resuelve el agendamiento concurrente |
 | Constraint de exclusión (DB) | PostgreSQL, sobre `profesional` y `sillon` con `tsrange` | Garantía anti-solapamiento a nivel base, no sólo aplicación |
 | Scheduler | Job de recordatorios | Dispara los envíos de WhatsApp |
 | DTO + Mapper | Frontera API ↔ dominio | Evita exponer el modelo de dominio y desacopla contratos |
 
-Se optó por una **arquitectura hexagonal limpia** (equivalente a capas con dominio aislado): el paquete `domain` no importa Spring ni JPA.
+Se optó por una **arquitectura hexagonal limpia** (equivalente a capas con dominio aislado): el paquete `domain` no importa FastAPI, Pydantic ni SQLAlchemy.
 
 ## Estructura de directorios
 
-```
+```text
 turnos-odontologia/
-├── pom.xml                         # (o build.gradle) — módulo raíz
-├── docker-compose.yml              # PostgreSQL + la app (contenedor liviano)
-├── src/
-│   ├── main/
-│   │   ├── java/ar/edu/consultorio/turnos/
-│   │   │   ├── domain/                     # núcleo: sin framework
-│   │   │   │   ├── model/                   # Turno, Profesional, Sillon, Prestacion, Paciente, Recordatorio
-│   │   │   │   ├── rule/                    # reglas RN-NN (duración, solapamiento, transiciones)
-│   │   │   │   ├── exception/               # errores de dominio
-│   │   │   │   └── port/                    # interfaces de repositorio y servicios externos
-│   │   │   ├── application/                 # casos de uso / orquestación
-│   │   │   │   ├── service/                 # AgendaService, TurnoService, RecordatorioService
-│   │   │   │   └── dto/                      # comandos y resultados de aplicación
-│   │   │   ├── infrastructure/              # adaptadores
-│   │   │   │   ├── persistence/             # entidades JPA, repositorios, mappers
-│   │   │   │   ├── whatsapp/                # adaptador WhatsApp Business API
-│   │   │   │   ├── mercadopago/             # adaptador Mercado Pago
-│   │   │   │   ├── calendar/                # adaptador Google Calendar
-│   │   │   │   └── scheduler/               # job de recordatorios
-│   │   │   └── api/                         # controllers REST + DTOs + seguridad
-│   │   │       ├── controller/
-│   │   │       ├── dto/
-│   │   │       └── security/                # filtros JWT, RBAC
-│   │   └── resources/
-│   │       ├── application.yml              # config base
-│   │       ├── application-prod.yml         # PostgreSQL
-│   │       ├── application-test.yml         # H2 en memoria
-│   │       └── db/migration/                # Flyway/Liquibase (constraint de exclusión)
-│   └── test/
-│       └── java/ar/edu/consultorio/turnos/
-│           ├── domain/                      # tests unitarios de reglas RN-NN
-│           ├── application/                 # tests de casos de uso
-│           ├── integration/                 # tests con H2
-│           └── concurrency/                 # tests de doble reserva
+├── pyproject.toml                   # metadatos, dependencias y pytest
+├── docker-compose.yml              # app + PostgreSQL; Redis cuando corresponda
+├── .env.example                    # nombres de variables, sin credenciales reales
+├── alembic/versions/                # migraciones SQLAlchemy/Alembic
+├── src/turnos/
+│   ├── domain/                     # núcleo Python puro, sin framework
+│   │   ├── model/                  # entidades, dataclasses, enums
+│   │   ├── rule/                   # reglas RN-NN
+│   │   ├── exception/              # errores de dominio
+│   │   └── port/                   # contratos de repositorios/servicios
+│   ├── application/
+│   │   ├── service/                # casos de uso; unidad de trabajo por puerto
+│   │   └── dto/                    # comandos/resultados puros
+│   ├── infrastructure/
+│   │   ├── persistence/            # SQLAlchemy, repositorios y mappers
+│   │   ├── whatsapp/               # adaptador futuro
+│   │   ├── mercadopago/            # adaptador futuro
+│   │   ├── calendar/               # adaptador futuro
+│   │   └── scheduler/              # recordatorios
+│   └── api/                       # FastAPI, composición de dependencias
+│       ├── controller/             # routers REST
+│       ├── dto/                    # modelos Pydantic de entrada/salida
+│       └── security/               # JWT/RBAC (changes posteriores)
+└── tests/
+    ├── domain/                    # pytest puro
+    ├── application/               # pytest + fakes
+    ├── integration/               # pytest + PostgreSQL real
+    └── concurrency/               # transacciones simultáneas en PostgreSQL
 ```
 
-## Módulos (Maven/Gradle)
+## Paquetes Python
 
-Para un TP académico, se proponen dos alternativas:
-
-- **Opción simple (recomendada):** un solo módulo con paquetes por capa (estructura de arriba). Menor fricción de build, suficiente para la consigna.
-- **Opción modular:** módulos `domain`, `application`, `infrastructure`, `api` como módulos Maven/Gradle separados, con `domain` sin dependencias de Spring. Refuerza la separación a nivel compilación y evidencia la arquitectura hexagonal.
-
-> **Suposición:** la cátedra no exige multi-módulo. Se documenta la opción modular como camino opcional; la implementación base usa paquetes por capa.
+Un solo proyecto Python con paquetes por capa. El dominio usa tipos estándar de Python y contratos de puertos; la API valida con Pydantic y la infraestructura traduce modelos SQLAlchemy. Las dependencias apuntan hacia adentro (`api → application → domain`, `infrastructure → domain`). La composición de adaptadores vive en el arranque de la API. Esta estructura es propuesta para implementar, no archivos ya existentes.
 
 ## Manejo de concurrencia
 
 El riesgo principal del Discovery es el **agendamiento concurrente** (online vs. mostrador). Se ataca en tres niveles:
 
 1. **Nivel aplicación — locking pesimista:** al confirmar un turno, se bloquean la franja del `Profesional` y la del `Sillon` dentro de la transacción (`SELECT ... FOR UPDATE` sobre un lock lógico por recurso, o bloqueo adoptivo sobre clave `(recursoId, fecha)`).
-2. **Nivel aplicación — locking optimista:** la entidad `Turno` lleva `@Version`; los updates concurrentes sobre el mismo turno (p. ej. dos reprogramaciones) fallan con `OptimisticLockException` y se traducen a un error de dominio controlado.
+2. **Nivel aplicación — locking optimista:** el adaptador SQLAlchemy de `Turno` usa una columna de versión (`version_id_col`); los updates concurrentes sobre el mismo turno (p. ej. dos reprogramaciones) se detectan como `StaleDataError` y se traducen a un error de dominio controlado.
 3. **Nivel base de datos — constraint de exclusión (PostgreSQL):** garantía dura contra el solapamiento, independiente de la aplicación:
 
 ```sql
@@ -91,17 +80,19 @@ ALTER TABLE turno
 
 El rango `[inicio, fin)` es **semiabierto**: permite encadenar exacto (fin de uno = inicio del siguiente) y bloquea el solapamiento estricto (RN-03). El `WHERE` con estados activos implementa RN-09 (los cancelados/libres no ocupan). Al recibir la violación del constraint (`23P01 exclusion_violation`), la API la traduce a `409 Conflict`.
 
-> **Nota:** H2 no soporta `EXCLUDE USING gist`. Por eso el anti-solapamiento en tests se respalda con el locking de aplicación, y el constraint de exclusión se prueba en un perfil de integración con PostgreSQL/Testcontainers (ver estrategia de tests).
+> **Límite de verificación:** los tests unitarios con fakes prueban reglas secuenciales de dominio. No prueban transacciones, locking, constraints ni concurrencia de PostgreSQL. RN-16 y los constraints requieren tests separados sobre PostgreSQL real, por ejemplo con Docker Compose o Testcontainers para Python. No sustituirlos por SQLite ni por un repositorio en memoria. La política de zona horaria debe acordarse antes de la migración: `tsrange` requiere timestamps sin zona; si se usan timestamps con zona corresponde `tstzrange`. El ajuste de stack no decide esa política.
 
 ## Estrategia de tests
 
 | Tipo | Herramienta | Cobertura |
 |---|---|---|
-| Unitarios de dominio | JUnit 5 + AssertJ (sin Spring) | Cada regla `RN-NN`: duración (RN-02), solapamiento y **fin == inicio** (RN-03), estados/transiciones (RN-07/RN-08), liberación de cupo (RN-04) |
-| Casos de uso | JUnit 5 + Mockito | Orquestación transaccional, cancelación, reprogramación atómica (RN-15) |
-| Integración persistencia | `@DataJpaTest` + **H2 en memoria** | Repositorios, mappers, derivación de `fin`, estados activos |
-| Concurrencia | JUnit 5 + hilos/`ExecutorService` | Doble reserva simultánea → una gana, otra rechazo controlado (RN-16) |
-| Constraint de exclusión | Testcontainers PostgreSQL | `EXCLUDE USING gist` bloquea solapamiento a nivel DB (RN-01/RN-03) |
+| Unitarios de dominio | pytest sin FastAPI/ORM | Cada regla RN-NN: duración, solapamiento y fin == inicio, estados, liberación de cupo |
+| Casos de uso | pytest + repositorios fake | Orquestación y contratos de puertos; no garantiza atomicidad real de la DB |
+| API | pytest + cliente de prueba FastAPI | Validación Pydantic, contrato HTTP y traducción de errores |
+| Integración persistencia | pytest + SQLAlchemy + PostgreSQL real | Repositorios, mappers, migraciones y estados activos |
+| Concurrencia y constraints | pytest + transacciones simultáneas en PostgreSQL real | Una reserva gana y la otra se rechaza controladamente (RN-16); exclusión por ambos recursos |
+
+Comando objetivo: `python -m pytest`. La implementación debe documentar instalación, configuración y comandos independientes para las pruebas con PostgreSQL en el README. No presentar integración pendiente como tests unitarios aprobados.
 
 Convención: **todo `RN-NN` tiene al menos un test que lo nombra** (trazabilidad regla → test).
 
@@ -109,17 +100,16 @@ Convención: **todo `RN-NN` tiene al menos un test que lo nombra** (trazabilidad
 
 - **Autenticación:** JWT sin estado (stateless), firmado; `sub` + `rol` en claims.
 - **Autorización:** RBAC a nivel de endpoint (filtros de seguridad) + verificación de propiedad en el dominio (paciente sólo accede a lo propio).
-- **Validación de input:** Bean Validation en DTOs de frontera; invariantes también en el dominio (defensa en profundidad).
-- **Secrets management:** credenciales de DB, WhatsApp, MercadoPago y Google Calendar por **variables de entorno**; nunca en el repositorio ni en `application.yml` versionado.
+- **Validación de input:** Pydantic en DTOs de frontera; invariantes también en el dominio (defensa en profundidad).
+- **Secrets management:** credenciales de DB, WhatsApp, MercadoPago y Google Calendar por **variables de entorno**; nunca en el repositorio ni en archivos de configuración versionados.
 - **Ley 25.326:** datos personales mínimos; prohibido almacenar datos sensibles reales en repos/seeds/tests (RN-LG). Hashing de contraseñas; logs sin datos personales.
 
 ## Variables de entorno
 
 | Variable | Descripción | Ejemplo | Sensible |
 |---|---|---|---|
-| `SPRING_DATASOURCE_URL` | URL de PostgreSQL | `jdbc:postgresql://localhost:5432/turnos` | N |
-| `SPRING_DATASOURCE_USERNAME` | Usuario DB | `turnos` | N |
-| `SPRING_DATASOURCE_PASSWORD` | Password DB | `********` | **S** |
+| `DATABASE_URL` | URL SQLAlchemy de PostgreSQL; puede contener credenciales | `postgresql+psycopg://usuario:clave@localhost:5432/turnos` (sintético) | **S** |
+| `REDIS_URL` | Conexión opcional para caché/trabajos | `redis://localhost:6379/0` | Según credenciales |
 | `APP_RECORDATORIO_ANTICIPACION_MIN` | Anticipación del recordatorio | `1440` | N |
 | `APP_AGENDA_APERTURA` | Hora de apertura | `08:00` | N |
 | `APP_AGENDA_CIERRE` | Hora de cierre | `20:00` | N |
@@ -134,7 +124,7 @@ Convención: **todo `RN-NN` tiene al menos un test que lo nombra** (trazabilidad
 
 ## Despliegue
 
-Ejecución **local** (Maven/Gradle) o **contenedor Docker liviano** con `docker-compose.yml` (app + PostgreSQL). Sin infraestructura cloud compleja, según la restricción del stack.
+Ejecución **local** (entorno virtual Python, FastAPI mediante un servidor ASGI) o **contenedor Docker liviano** con `docker-compose.yml` (app + PostgreSQL). Sin infraestructura cloud compleja, según la restricción del stack.
 
 ## Referencias
 

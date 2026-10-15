@@ -124,10 +124,11 @@
       "system_type": "api",
       "domain": "salud / gestion de turnos odontologicos (backend puro, mono-tenant)",
       "scale": "team",
-      "stack": ["Java 21 (LTS)", "Spring Boot 3.x", "PostgreSQL 15+", "H2 (tests)", "JUnit 5 + AssertJ + Mockito", "Flyway", "Maven"],
+      "stack": ["Python 3.12+", "FastAPI", "Pydantic", "SQLAlchemy", "PostgreSQL 15+", "Alembic", "pytest", "Docker/Compose", "JWT (C-14)", "Redis cuando corresponda"],
       "needs_infra": true
     },
     "architectural_decisions": {
+      "ajuste_stack": "2026-10-15: Python/FastAPI confirmado por usuario según indicación docente 2026-10-01; ver docs/decisiones/ajuste-stack-python.md",
       "tipos_de_api": "API/backend puro, sin UI obligatoria",
       "patron": "capas / hexagonal limpia (domain / application / infrastructure)",
       "tenant": "mono-tenant, un solo consultorio (<50 personas)",
@@ -154,6 +155,7 @@
     ]
   },
   "roadmap": {
+    "ajuste_stack": "Corrección documental a Python/FastAPI/pytest; estados y dependencias sin completar. Alcance académico de C-06 pendiente de resolver en Explore/Propose.",
     "created_by": "roadmap-generator",
     "changes_file": "CHANGES.md",
     "total_changes": 20,
@@ -162,6 +164,7 @@
     "change_prioritario": "Crear un turno evitando solapamientos por profesional y por sillón/box"
   },
   "skills": {
+    "nota_vigencia": "Historial de selección/instalación de la fundación anterior; las skills Java están obsoletas para el stack Python vigente. Este ajuste no verificó ni realizó instalaciones.",
     "created_by": "find-skill",
     "fecha": "2026-10-15",
     "metodo": "npx skills list -g (instaladas) + npx skills find <keyword> (candidatas) + verificacion de provenance en skills.sh y GitHub; NO se instalo nada",
@@ -279,12 +282,14 @@
   "registry": {
     "created_by": "skill-registry",
     "file": ".atl/skill-registry.md",
-    "skills_dominio": ["java-springboot", "java-junit", "postgresql-table-design"],
+    "skills_dominio": ["postgresql-table-design"],
+    "skills_dominio_historicas": ["java-springboot", "java-junit", "postgresql-table-design"],
+    "skills_python": "Pendiente de verificar; ninguna instalada por este ajuste",
     "skills_flujo": ["active-orchestrator", "agents-md-generator", "discovery-research", "find-skills", "kb-creator", "roadmap-generator", "skill-creator", "skill-registry", "web-scraper"],
     "convenciones": [
       "EXCLUDE USING gist + btree_gist + SQLSTATE 23P01 -> 409 (C-13)",
-      "Testcontainers PostgreSQL para tests del constraint (C-13)",
-      "Locking pesimista/optimista + traduccion de OptimisticLockException (C-13)",
+      "PostgreSQL real (Compose o Testcontainers para Python) para tests del constraint (C-13)",
+      "Locking pesimista/optimista + traduccion de StaleDataError (C-13)",
       "Arquitectura hexagonal domain/application/infrastructure (C-01/C-02)",
       "Guardrail de CI para datos sinteticos RN-06 (C-01)",
       "Integraciones externas fuera del MVP, reevaluar Fase 4 (C-17/C-18/C-19)"
@@ -294,8 +299,9 @@
   "agents": {
     "created_by": "agent-instruction",
     "files": ["AGENTS.md", "CLAUDE.md"],
-    "reglas_applied": ["Ley 25.326 / datos sinteticos (RN-06)", "Arquitectura hexagonal (domain/application/infrastructure)", "Anti-solapamiento RN-01/RN-02/RN-03 (fin == inicio valido)", "Testing JUnit 5 + AssertJ sin contexto Spring"],
-    "reglas_duras": ["Ley 25.326 / datos sinteticos", "Arquitectura hexagonal", "Anti-solapamiento RN-01/RN-02/RN-03", "Testing JUnit 5 + AssertJ"],
+    "reglas_applied": ["Ley 25.326 / datos sinteticos (RN-06)", "Arquitectura hexagonal (domain/application/infrastructure)", "Anti-solapamiento RN-01/RN-02/RN-03 (fin == inicio valido)", "Testing pytest sin framework"],
+    "reglas_duras": ["Ley 25.326 / datos sinteticos", "Arquitectura hexagonal", "Anti-solapamiento RN-01/RN-02/RN-03", "Testing pytest"],
     "fase": "fundacion-completa"
-  }
+  },
+  "stack_adjustment": {"date": "2026-10-15", "source_teacher_date": "2026-10-01", "record": "docs/decisiones/ajuste-stack-python.md", "status": "documentacion-ajustada; sin implementacion ni evidencias OPSX", "preserved": "Discovery original, historial de skills, step/owner y estados de changes"}
 }

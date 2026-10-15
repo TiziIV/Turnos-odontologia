@@ -8,15 +8,19 @@
 
 ## Stack tecnológico
 
-| Capa | Tecnología | Versión mínima | Notas |
+| Capa | Tecnología | Versión objetivo | Notas |
 |---|---|---|---|
-| Lenguaje | Java | 21 (LTS) | Records, pattern matching, tipado fuerte para trazabilidad de reglas |
-| Framework | Spring Boot | 3.x | Web (REST), Validation, Data JPA |
-| Build | Maven o Gradle | Maven 3.9+ / Gradle 8+ | Módulos por capa (ver `08`) |
-| Base productiva | PostgreSQL | 15+ | Soporte de `EXCLUDE USING gist` con `tsrange` |
-| Base de testing | H2 | 2.2+ | En memoria, perfil de test |
-| Testing | JUnit 5 + AssertJ | JUnit 5.10 / AssertJ 3.24 | Tests unitarios de reglas + integración de persistencia |
-| Contenedores | Docker (opcional) | — | Ejecución local o contenedor liviano, sin infra cloud |
+| Lenguaje | Python | 3.12+ | Dominio puro, tipos explícitos |
+| API REST | FastAPI + Pydantic | A fijar al implementar | Validación en la frontera; sin dependencias de framework en el dominio |
+| Persistencia | SQLAlchemy + PostgreSQL | PostgreSQL 15+; SQLAlchemy a fijar | Modelos ORM y mappers en infraestructura; constraint de exclusión |
+| Migraciones | Alembic | A fijar al implementar | Revisiones en `alembic/versions/` |
+| Testing | pytest | A fijar al implementar | Unitarios con fakes; integración y concurrencia con PostgreSQL real |
+| Dependencias | venv + pip + pyproject.toml | Según entorno Python | Versiones reproducibles a registrar al implementar |
+| Autenticación | JWT | Planificada en C-14 | RBAC en C-15; no incorporado por este ajuste |
+| Caché / trabajos | Redis | Cuando corresponda | No sustituye el constraint de PostgreSQL ni es requisito de los tests unitarios |
+| Contenedores | Docker + Compose | Según entorno | App y PostgreSQL locales; Redis sólo si un change lo necesita |
+
+Estas son decisiones de documentación, no una declaración de dependencias instaladas. React/TypeScript/Vite queda como contexto de un futuro cliente, fuera del change backend.
 
 ## Arquitectura general
 
@@ -41,7 +45,7 @@
                                         │  puertos
             ┌───────────────────────────▼──────────────────────────────┐
             │                  INFRAESTRUCTURA                          │
-            │   JPA/PostgreSQL, mappers, adaptadores WhatsApp/MercadoPago│
+            │   SQLAlchemy/PostgreSQL, mappers, adaptadores WhatsApp/MercadoPago│
             │   Google Calendar, scheduler de recordatorios             │
             └──────────────────────────────────────────────────────────┘
 ```

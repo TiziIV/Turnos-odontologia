@@ -34,6 +34,15 @@
 
 ---
 
+### IN-06 — Stack docente (resuelto el 2026-10-15)
+La fundación indicaba Java/Spring/JUnit. Juan confirmó Python/FastAPI según la indicación docente del 2026-10-01. Se corrigen KB, roadmap e instrucciones; ver [registro](../docs/decisiones/ajuste-stack-python.md). Esta resolución no cierra las demás preguntas de dominio.
+
+### IN-07 — Un change académico frente a dependencias pendientes (resuelto el 2026-10-15)
+Juan aprobó C-06 como primer change entregado, conservando su ID histórico e incorporando base mínima FastAPI, dominio/modelos/puertos, datos ficticios y pytest. La demo local usa memoria; persistencia/concurrencia PostgreSQL, CRUDs completos, login/RBAC e integraciones quedan pendientes. Para este alcance no se exige archivar antes C-01/C-02/C-03/C-04/C-05/C-05b; sus capacidades completas siguen pendientes. Ver la excepción en CHANGES.md y el registro de decisión. Explore/Propose debe documentar estos límites antes de Apply.
+
+### IN-08 — Política temporal (abierto antes de persistencia)
+Definir zona horaria y normalización de `datetime`. Alinear el tipo SQL y su rango: timestamps sin zona con `tsrange`, o con zona con `tstzrange`. No mezclar ambos ni atribuir a tests con fakes la validación de esa decisión.
+
 ## Preguntas abiertas (priorizadas)
 
 | Prioridad | Pregunta | Bloquea | Decisor |

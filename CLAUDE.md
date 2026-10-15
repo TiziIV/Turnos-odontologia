@@ -15,18 +15,21 @@
 
 ## Stack Tecnológico
 
-| Capa | Tecnología | Versión | Notas |
+| Capa | Tecnología | Versión objetivo | Notas |
 |---|---|---|---|
-| Lenguaje | Java | 21 (LTS) | Records, pattern matching |
-| Framework | Spring Boot | 3.x | Web (REST), Validation, Data JPA |
-| Build | Maven | 3.9+ | Un solo módulo, paquetes por capa |
-| Base productiva | PostgreSQL | 15+ | `EXCLUDE USING gist` con `tsrange` |
-| Base de testing | H2 | 2.2+ | En memoria, perfil de test |
-| Testing | JUnit 5 + AssertJ (+ Mockito) | 5.10 / 3.24 | Unitarios de reglas + integración de persistencia |
-| Migraciones | Flyway | — | `db/migration` |
-| Contenedores | Docker (opcional) | — | `docker-compose.yml` local, sin infra cloud |
+| Lenguaje | Python | 3.12+ | Dominio puro, tipos explícitos |
+| API REST | FastAPI + Pydantic | A fijar al implementar | Validación en la frontera; sin dependencias de framework en el dominio |
+| Persistencia | SQLAlchemy + PostgreSQL | PostgreSQL 15+; SQLAlchemy a fijar | Modelos ORM y mappers en infraestructura; constraint de exclusión |
+| Migraciones | Alembic | A fijar al implementar | Revisiones en `alembic/versions/` |
+| Testing | pytest | A fijar al implementar | Unitarios con fakes; integración y concurrencia con PostgreSQL real |
+| Dependencias | venv + pip + pyproject.toml | Según entorno Python | Versiones reproducibles a registrar al implementar |
+| Autenticación | JWT | Planificada en C-14 | RBAC en C-15; no incorporado por este ajuste |
+| Caché / trabajos | Redis | Cuando corresponda | No sustituye el constraint de PostgreSQL ni es requisito de los tests unitarios |
+| Contenedores | Docker + Compose | Según entorno | App y PostgreSQL locales; Redis sólo si un change lo necesita |
 
-**Comando de test:** `mvn test`
+Estas son decisiones de documentación, no una declaración de dependencias instaladas. React/TypeScript/Vite queda como contexto de un futuro cliente, fuera del change backend.
+
+**Comando de test objetivo:** `python -m pytest` (cuando esté implementado).
 
 Detalle completo: [knowledge-base/02_descripcion_general.md](knowledge-base/02_descripcion_general.md)
 
@@ -58,7 +61,7 @@ La fuente de verdad del dominio vive en `knowledge-base/`. **Leé el archivo rel
 Estructura canónica (detalle en [08_arquitectura_propuesta.md](knowledge-base/08_arquitectura_propuesta.md) §Estructura de directorios):
 
 ```
-src/main/java/ar/edu/consultorio/turnos/
+src/turnos/
 ├── domain/            # núcleo: SIN framework
 │   ├── model/         # Turno, Profesional, Sillon, Prestacion, Paciente, Recordatorio
 │   ├── rule/          # reglas RN-NN (duración, solapamiento, transiciones)
@@ -71,42 +74,38 @@ src/main/java/ar/edu/consultorio/turnos/
 └── api/               # controller, dto, security (JWT/RBAC)
 ```
 
-**Regla de dependencia (obligatoria):** `domain` **no conoce** Spring, JPA ni la base de datos — el paquete `domain` no importa framework alguno. Las dependencias apuntan hacia adentro: `api → application → domain` y `infrastructure → domain` (vía puertos). El dominio se testea sin contexto Spring.
+**Regla de dependencia (obligatoria):** `domain` **no conoce** FastAPI, Pydantic, SQLAlchemy ni la base de datos — el paquete `domain` no importa framework alguno. Las dependencias apuntan hacia adentro: `api → application → domain` y `infrastructure → domain` (vía puertos). El dominio se testea sin framework.
 
 ---
 
 ## Skills Disponibles
 
-| Agente | Rol | Skills que carga |
-|--------|-----|------------------|
-| **Orquestación** | Fundación SDD + flujo OPSX | `active-orchestrator`, `agents-md-generator`, `discovery-research`, `find-skills`, `kb-creator`, `roadmap-generator`, `skill-creator`, `skill-registry`, `web-scraper` + las 6 `openspec-*` |
-| **Núcleo de agenda** | Dominio de turnos, anti-solapamiento, duración | `java-springboot`, `java-junit` |
-| **Agenda auxiliar** | Disponibilidad, concurrencia, constraint | `java-springboot`, `postgresql-table-design`, `java-junit` |
-| **Seguridad / catálogo** | Auth JWT, RBAC, prestaciones/profesionales/sillones | `java-springboot`, `java-junit` |
+| Rol | Referencias registradas | Estado |
+|---|---|---|
+| Orquestación | `active-orchestrator`, `kb-creator`, `roadmap-generator`, `agents-md-generator`, `skill-registry`, `openspec-*` | Referencias de la fundación; verificar disponibilidad en el entorno actual |
+| Persistencia | `postgresql-table-design` | Referencia heredada; no se afirma instalación local nueva |
+| Backend Python y tests | Convenciones de KB 02/08 y este archivo | No se ha instalado ni verificado una skill Python en este ajuste |
 
-**Skills de dominio (external, `~/.agents/skills/`):** `java-springboot`, `java-junit`, `postgresql-table-design`.
-**Skills de infra OPSX (proyecto `.opencode/skills/`):** `openspec-propose`, `openspec-apply-change`, `openspec-archive-change`, `openspec-explore`, `openspec-sync-specs`, `openspec-update-change`.
+`java-springboot` y `java-junit` fueron registradas en la fundación anterior y quedan **obsoletas para el stack actual**. No cargarlas para implementar Python. El registro conserva su historia sin convertirla en instrucciones activas.
 
-**Mapeo change → skill (resumen):** `C-01`, `C-03`, `C-04`, `C-05`, `C-05b`, `C-06★`, `C-08`, `C-14`, `C-15`, `C-16`, `C-17`, `C-18`, `C-19` → `java-springboot`; `C-06★`, `C-02` → `java-junit`; `C-02`, `C-13` → `postgresql-table-design`; todos → `openspec-*` (infra).
-
-> Los compact rules de cada skill los resuelve el orquestador desde `.atl/skill-registry.md` (generado por `skill-registry`; no versionado — no está en el repo). Esta tabla solo mapea skill→rol.
-
-### ⚠️ Nota operativa — skills externas requieren reinicio
-
-Las 3 skills de dominio viven en `~/.agents/skills/` (store canónico cross-agent), **no** en `~/.config/opencode/skills/`. OpenCode las levanta porque escanea `~/.agents/skills/**/SKILL.md` como *external skills*, **pero carga config/skills una sola vez al arrancar y NO hace hot-reload**. Hasta que se **reinicie OpenCode**, esas 3 skills **no existen** para los agentes; invocarlas sin reiniciar **falla**. Mitigación: `.atl/skill-registry.md` contiene las **reglas compactas** auto-contenidas por skill, usables aunque la skill no esté cargada. (`OPENCODE_DISABLE_EXTERNAL_SKILLS=1` desactiva las external skills por completo.)
+Los compact rules se resuelven desde `.atl/skill-registry.md`. Las rutas heredadas deben comprobarse antes de invocar una skill; este ajuste no modifica instalaciones globales.
 
 ---
 
 ## Roadmap de Changes
 
+> **Excepción académica aprobada el 2026-10-15:** C-06 es el primer change entregado (conserva su ID). Incluye base mínima FastAPI + dominio/modelos/puertos + fixtures sintéticos + pytest, con repositorios en memoria para demo local. No requiere archivar antes C-01/C-02/C-03/C-04/C-05/C-05b: sus capacidades completas siguen pendientes. CRUDs, login/RBAC e integraciones se difieren; PostgreSQL/SQLAlchemy/Alembic siguen como diseño futuro si no implementados. No afirmar persistencia durable ni concurrencia real. Explore/Propose debe concretar estos límites antes de Apply.
+
+
 El plan de implementación completo está en [CHANGES.md](CHANGES.md). Resumen:
 
 - **Total:** 20 changes en 5 fases (0 Cimientos → 4 POSTERIOR).
-- **Camino crítico (5):** `C-01 → C-02 → C-03 → C-06 ★ → C-08`.
+- **Camino crítico del producto completo (5):** `C-01 → C-02 → C-03 → C-06 ★ → C-08`.
 - **Change prioritario/ancla:** `C-06 crear-turno-anti-solapamiento ★` — primer change funcional del núcleo (recurso doble + anti-solapamiento).
-- **Primer change:** `C-01 foundation-setup`.
+- **Primer change del producto completo:** `C-01 foundation-setup`.
+- **Primer change entregado en el trabajo académico:** `C-06 crear-turno-anti-solapamiento`, con base mínima incluida y alcance acotado aprobado.
 
-**Flujo OPSX:** `/opsx:propose <change>` → implementar las tasks → `/opsx:archive <change>` (+ marcar `[x]` en `CHANGES.md`). Antes de cualquier `propose`, leé `CHANGES.md`, verificá que las dependencias estén archivadas y leé los archivos de "Leer antes".
+**Flujo OPSX:** `/opsx:propose <change>` → implementar las tasks → `/opsx:archive <change>` (+ marcar `[x]` en `CHANGES.md`). Antes de cualquier `propose`, leé `CHANGES.md`, verificá dependencias archivadas o la excepción académica explícita de C-06 y leé los archivos de "Leer antes".
 
 ---
 
@@ -126,21 +125,23 @@ Son contrato: romperlas es un defecto.
 
 **Prevalencia estricta del diseño hexagonal (`domain` / `application` / `infrastructure`) sobre convenciones por feature. Dominio puro, sin acoplamiento a frameworks.**
 - **Respaldo KB:** [08_arquitectura_propuesta.md §Estructura de directorios / §Patrones](knowledge-base/08_arquitectura_propuesta.md).
-- **Cómo se hace cumplir:** el paquete `domain` **no importa** Spring/JPA (verificable por revisión y por los tests de dominio sin contexto Spring); si una skill (p. ej. `java-springboot`) sugiere organizar por feature, **prevalecen las capas del proyecto**.
+- **Cómo se hace cumplir:** el paquete `domain` **no importa** FastAPI/Pydantic/SQLAlchemy (verificable por revisión y por los tests de dominio sin framework); si una skill sugiere organizar por feature, **prevalecen las capas del proyecto**.
 
 ### 3. Consistencia de anti-solapamiento — RN-01 / RN-02 / RN-03
 
 **Todo turno debe respetar `RN-01`, `RN-02` y `RN-03`. Un turno puede iniciar en el instante exacto en que termina el anterior (caso de borde válido).**
 - **Respaldo KB:** [05_reglas_de_negocio.md §RN-01 §RN-02 §RN-03](knowledge-base/05_reglas_de_negocio.md) · [08_arquitectura_propuesta.md §Manejo de concurrencia](knowledge-base/08_arquitectura_propuesta.md).
-- **Cómo se hace cumplir:** tests de dominio (recurso doble libre, duración derivada de la prestación, `fin(A) == inicio(B)` ⇒ **éxito**, `inicio(B) = fin(A) − 1 min` ⇒ **rechazo**) + `constraint` de exclusión PostgreSQL (`EXCLUDE USING gist` con `tsrange` semiabierto `[inicio, fin)`), probado con Testcontainers (change `C-13`).
+- **Cómo se hace cumplir:** tests de dominio (recurso doble libre, duración derivada de la prestación, `fin(A) == inicio(B)` ⇒ **éxito**, `inicio(B) = fin(A) − 1 min` ⇒ **rechazo**) + `constraint` de exclusión PostgreSQL (`EXCLUDE USING gist` con `tsrange` semiabierto `[inicio, fin)`), a probar con PostgreSQL real (change `C-13`, pendiente).
 
-### 4. Testing — JUnit 5 + AssertJ obligatorios
+### 4. Testing — pytest obligatorio
 
-**Pruebas unitarias obligatorias con JUnit 5 y AssertJ para cada escenario de cambio, sin depender del contexto Spring completo para la lógica pura de dominio.**
+**Pruebas unitarias obligatorias con pytest para cada escenario de cambio, sin depender de FastAPI ni de SQLAlchemy para la lógica pura de dominio.**
 - **Respaldo KB:** [08_arquitectura_propuesta.md §Estrategia de tests](knowledge-base/08_arquitectura_propuesta.md) · [05_reglas_de_negocio.md](knowledge-base/05_reglas_de_negocio.md) (cada regla indica "cómo se testea").
-- **Cómo se hace cumplir:** la lógica de dominio se testea con **JUnit 5 + AssertJ puro** (sin `@SpringBootTest`); el CI corre `mvn test`; test parametrizado obligatorio de duración por prestación (`RN-02`) y de límite de solapamiento (`RN-03`/`RN-13`) en `C-06 ★`.
+- **Cómo se hace cumplir:** la lógica de dominio se testea con **pytest puro** (sin FastAPI ni ORM); el CI corre `python -m pytest`; test parametrizado obligatorio de duración por prestación (`RN-02`) y de límite de solapamiento (`RN-03`/`RN-13`) en `C-06 ★`.
 
 ---
+
+> **Límite:** tests unitarios con fakes no prueban constraints, atomicidad ni concurrencia PostgreSQL (RN-16). Se necesita integración separada sobre PostgreSQL real.
 
 ## Convenciones del Proyecto (reemplazan skills inexistentes)
 
@@ -149,8 +150,8 @@ Los 6 gaps sin skill candidata se cubren con convención + puntero a la KB. Un a
 | # | Change(s) | Convención | Dónde vive |
 |---|-----------|-----------|------------|
 | 1 | C-13 | Constraint `EXCLUDE USING gist (profesional_id WITH =, tsrange(inicio,fin,'[)') WITH &&) WHERE (estado IN ('PENDIENTE','CONFIRMADO'))` + análogo para `sillon_id`; extensión `btree_gist`; traducir SQLSTATE **`23P01` → `409 Conflict`** | [08 §Manejo de concurrencia](knowledge-base/08_arquitectura_propuesta.md) · [09 DD-06/DD-08](knowledge-base/09_decisiones_y_supuestos.md) |
-| 2 | C-13 | Tests del constraint con **Testcontainers PostgreSQL** — H2 **no** soporta `EXCLUDE USING gist` | [08 §Manejo de concurrencia](knowledge-base/08_arquitectura_propuesta.md) · [CHANGES.md C-13](CHANGES.md) |
-| 3 | C-13 | Locking **pesimista** (`SELECT ... FOR UPDATE` por `(recursoId, fecha)`) + **optimista** (`@Version` en `Turno`); traducir `OptimisticLockException` a error de dominio controlado | [08 §Manejo de concurrencia](knowledge-base/08_arquitectura_propuesta.md) |
+| 2 | C-13 | Tests del constraint con **PostgreSQL real** (Docker Compose o Testcontainers para Python); los fakes no validan `EXCLUDE USING gist` | [08 §Manejo de concurrencia](knowledge-base/08_arquitectura_propuesta.md) · [CHANGES.md C-13](CHANGES.md) |
+| 3 | C-13 | Locking **pesimista** (`SELECT ... FOR UPDATE` por `(recursoId, fecha)`) + **optimista** (columna de versión SQLAlchemy en `Turno`); traducir `StaleDataError` a error de dominio controlado | [08 §Manejo de concurrencia](knowledge-base/08_arquitectura_propuesta.md) |
 | 4 | C-01, C-02 | Arquitectura **hexagonal limpia** por capa; el dominio no depende de frameworks | [08 §Estructura de directorios](knowledge-base/08_arquitectura_propuesta.md) |
 | 5 | C-01 | Guardrail de CI para datos sintéticos (**RN-06**): dominios `@example.test`, documentos `0000000X` | [05 §RN-06](knowledge-base/05_reglas_de_negocio.md) · [CHANGES.md C-01](CHANGES.md) |
 | 6 | C-17, C-18, C-19 | Integraciones externas (WhatsApp Business API, Mercado Pago, Google Calendar) **fuera del MVP**; reevaluar en Fase 4 | [02 §Integraciones externas](knowledge-base/02_descripcion_general.md) · [10](knowledge-base/10_preguntas_abiertas.md) |

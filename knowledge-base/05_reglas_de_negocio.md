@@ -1,6 +1,6 @@
 # Reglas de Negocio
 
-Cada regla tiene un código único y estable `RN-NN` para trazabilidad. Toda regla `RN-NN` debe tener, como mínimo, un test automatizado (JUnit 5 + AssertJ) que la respalde. Las reglas confirmadas en el Discovery son RN-01 a RN-06; RN-07 a RN-15 completan el dominio (estados, transiciones, reprogramación, tolerancia y errores) y se marcan como derivadas.
+Cada regla tiene un código único y estable `RN-NN` para trazabilidad. Toda regla `RN-NN` debe tener, como mínimo, un test automatizado (pytest) que la respalde. Las reglas confirmadas en el Discovery son RN-01 a RN-06; RN-07 a RN-15 completan el dominio (estados, transiciones, reprogramación, tolerancia y errores) y se marcan como derivadas.
 
 Formato de cada regla: **enunciado**, **justificación**, **invariante verificable**, **cómo se testea**.
 
@@ -126,7 +126,7 @@ Formato de cada regla: **enunciado**, **justificación**, **invariante verificab
 **Enunciado:** ante dos intentos simultáneos de reservar el mismo recurso en la misma franja (p. ej. canal online vs. mostrador), exactamente **uno** debe tener éxito y el otro recibir un rechazo controlado; nunca ambos ni ninguno por corrupción.
 **Justificación:** el riesgo principal identificado en el Discovery es el agendamiento concurrente entre canales.
 **Invariante verificable:** bajo cualquier intercalación de dos transacciones sobre el mismo `(profesionalId, franja)` o `(sillonId, franja)`, el resultado final contiene a lo sumo un turno activo en esa franja.
-**Cómo se testea:** test de concurrencia con dos hilos/transacciones simultáneas sobre el mismo recurso; se verifica que una commitea y la otra falla con error de dominio controlado (no con excepción de base cruda). En PostgreSQL se respalda con el **constraint de exclusión** (`EXCLUDE USING gist`); en H2 se respalda con el locking de la aplicación.
+**Cómo se testea:** test de concurrencia con dos hilos/transacciones simultáneas sobre el mismo recurso; se verifica que una commitea y la otra falla con error de dominio controlado (no con excepción de base cruda). Se ejecuta sobre PostgreSQL real y se respalda con el **constraint de exclusión** (`EXCLUDE USING gist`). Los tests unitarios con fakes no verifican RN-16 ni el locking de la base.
 
 ---
 

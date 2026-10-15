@@ -81,16 +81,18 @@ erDiagram
     }
 ```
 
+> Los tipos de atributos se expresan en Python; los nombres conceptuales del dominio y del contrato API se conservan. La política de zona horaria está pendiente en `10_preguntas_abiertas.md`.
+
 ## Entidades
 
 ### Usuario
 
 - **Atributos:**
-  - `id: Long` — PK.
-  - `email: String` — único, identificador de login.
-  - `passwordHash: String` — hash (bcrypt/argon2), nunca texto plano.
-  - `rol: String` (enum) — `PACIENTE | ODONTOLOGO | RECEPCIONISTA | ADMINISTRADOR`.
-  - `activo: Boolean` — habilitación de la cuenta.
+  - `id: int` — PK.
+  - `email: str` — único, identificador de login.
+  - `passwordHash: str` — hash (bcrypt/argon2), nunca texto plano.
+  - `rol: str` (enum) — `PACIENTE | ODONTOLOGO | RECEPCIONISTA | ADMINISTRADOR`.
+  - `activo: bool` — habilitación de la cuenta.
 - **Relaciones:** `0..1 : 1` con `Profesional` y `0..1 : 1` con `Paciente` (un usuario puede representar a un profesional o a un paciente; los roles de staff no necesitan perfil clínico).
 - **Constraints:** `email` único; `rol` no nulo.
 - **Índices:** índice único sobre `email`.
@@ -98,12 +100,12 @@ erDiagram
 ### Paciente
 
 - **Atributos:**
-  - `id: Long` — PK.
-  - `nombre: String`, `apellido: String`.
-  - `documento: String` — documento de identidad (dato personal, protegido por RN-LG).
-  - `telefono: String` — usado por los recordatorios de WhatsApp.
-  - `email: String`.
-  - `fechaNacimiento: LocalDate` — opcional.
+  - `id: int` — PK.
+  - `nombre: str`, `apellido: str`.
+  - `documento: str` — documento de identidad (dato personal, protegido por RN-LG).
+  - `telefono: str` — usado por los recordatorios de WhatsApp.
+  - `email: str`.
+  - `fechaNacimiento: date` — opcional.
 - **Relaciones:** `1 : N` con `Turno`.
 - **Constraints:** `telefono` y `email` con formato validado; `documento` único por consultorio (mono-tenant).
 - **Índices:** índice sobre `telefono` (búsqueda para recordatorios/webhooks).
@@ -111,11 +113,11 @@ erDiagram
 ### Profesional (Odontólogo)
 
 - **Atributos:**
-  - `id: Long` — PK.
-  - `nombre: String`, `apellido: String`.
-  - `matricula: String` — única (identifica al odontólogo).
-  - `especialidad: String` — general o especialidad.
-  - `activo: Boolean` — un profesional inactivo no puede recibir turnos nuevos.
+  - `id: int` — PK.
+  - `nombre: str`, `apellido: str`.
+  - `matricula: str` — única (identifica al odontólogo).
+  - `especialidad: str` — general o especialidad.
+  - `activo: bool` — un profesional inactivo no puede recibir turnos nuevos.
 - **Relaciones:** `1 : N` con `Turno` (como **recurso 1**).
 - **Constraints:** `matricula` única.
 - **Índices:** índice sobre `activo` (filtro de disponibilidad).
@@ -123,10 +125,10 @@ erDiagram
 ### Sillon (box)
 
 - **Atributos:**
-  - `id: Long` — PK.
-  - `codigo: String` — único (ej. `BOX-1`).
-  - `descripcion: String` — opcional.
-  - `activo: Boolean` — un sillón inactivo no puede recibir turnos nuevos.
+  - `id: int` — PK.
+  - `codigo: str` — único (ej. `BOX-1`).
+  - `descripcion: str` — opcional.
+  - `activo: bool` — un sillón inactivo no puede recibir turnos nuevos.
 - **Relaciones:** `1 : N` con `Turno` (como **recurso 2**).
 - **Constraints:** `codigo` único.
 - **Índices:** índice sobre `activo`.
@@ -134,11 +136,11 @@ erDiagram
 ### Prestacion
 
 - **Atributos:**
-  - `id: Long` — PK.
-  - `codigo: String` — único (ej. `LIMPIEZA`, `ENDO`).
-  - `nombre: String`.
-  - `duracionMinutos: Int` — **duración del turno derivada de la prestación** (RN-02).
-  - `activa: Boolean`.
+  - `id: int` — PK.
+  - `codigo: str` — único (ej. `LIMPIEZA`, `ENDO`).
+  - `nombre: str`.
+  - `duracionMinutos: int` — **duración del turno derivada de la prestación** (RN-02).
+  - `activa: bool`.
 - **Relaciones:** `1 : N` con `Turno`.
 - **Constraints:** `duracionMinutos > 0`; `codigo` único.
 - **Índices:** índice único sobre `codigo`.
@@ -146,17 +148,17 @@ erDiagram
 ### Turno
 
 - **Atributos:**
-  - `id: Long` — PK.
-  - `pacienteId: Long` — FK a `Paciente`.
-  - `profesionalId: Long` — FK a `Profesional` (**recurso 1**, obligatorio).
-  - `sillonId: Long` — FK a `Sillon` (**recurso 2**, obligatorio).
-  - `prestacionId: Long` — FK a `Prestacion` (de la que se deriva la duración).
-  - `inicio: Instant/Timestamp` — inicio del intervalo.
-  - `fin: Instant/Timestamp` — calculado como `inicio + duracionMinutos` (RN-02).
-  - `estado: String` (enum) — `PENDIENTE | CONFIRMADO | CANCELADO | REALIZADO | AUSENTE`.
-  - `canal: String` (enum) — `ONLINE | MOSTRADOR` (origen de la reserva, para trazabilidad).
-  - `creadoEn: Instant` — auditoría.
-  - `version: Long` — **locking optimista** (columna `@Version`).
+  - `id: int` — PK.
+  - `pacienteId: int` — FK a `Paciente`.
+  - `profesionalId: int` — FK a `Profesional` (**recurso 1**, obligatorio).
+  - `sillonId: int` — FK a `Sillon` (**recurso 2**, obligatorio).
+  - `prestacionId: int` — FK a `Prestacion` (de la que se deriva la duración).
+  - `inicio: datetime` — inicio del intervalo.
+  - `fin: datetime` — calculado como `inicio + duracionMinutos` (RN-02).
+  - `estado: str` (enum) — `PENDIENTE | CONFIRMADO | CANCELADO | REALIZADO | AUSENTE`.
+  - `canal: str` (enum) — `ONLINE | MOSTRADOR` (origen de la reserva, para trazabilidad).
+  - `creadoEn: datetime` — auditoría.
+  - `version: int` — **locking optimista** (columna de versión en el adaptador SQLAlchemy (`version_id_col`)).
 - **Relaciones:** `N : 1` con `Paciente`, `Profesional`, `Sillon`, `Prestacion`; `1 : N` con `Recordatorio`.
 - **Constraints:**
   - `inicio < fin` (intervalo semiabierto `[inicio, fin)`).
@@ -168,12 +170,12 @@ erDiagram
 ### Recordatorio
 
 - **Atributos:**
-  - `id: Long` — PK.
-  - `turnoId: Long` — FK a `Turno`.
-  - `programadoPara: Instant` — momento de envío (inicio − anticipación configurada).
-  - `canal: String` (enum) — `WHATSAPP` (único en el MVP).
-  - `estado: String` (enum) — `PROGRAMADO | ENVIADO | FALLIDO | CANCELADO`.
-  - `enviadoEn: Instant` — opcional, se completa al enviar.
+  - `id: int` — PK.
+  - `turnoId: int` — FK a `Turno`.
+  - `programadoPara: datetime` — momento de envío (inicio − anticipación configurada).
+  - `canal: str` (enum) — `WHATSAPP` (único en el MVP).
+  - `estado: str` (enum) — `PROGRAMADO | ENVIADO | FALLIDO | CANCELADO`.
+  - `enviadoEn: datetime` — opcional, se completa al enviar.
 - **Relaciones:** `N : 1` con `Turno`.
 - **Constraints:** `programadoPara < turno.inicio`; un turno activo tiene a lo sumo un recordatorio vigente.
 - **Índices:** índice sobre `(estado, programadoPara)` (consulta del scheduler).

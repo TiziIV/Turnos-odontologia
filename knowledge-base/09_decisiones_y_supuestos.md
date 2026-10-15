@@ -6,12 +6,12 @@
 |---|---|---|---|---|
 | DD-01 | **API/backend puro** (sin UI obligatoria) | (a) Fullstack web; (b) API pura; (c) Desktop | La consigna de cátedra define la implementación a nivel de **lógica de dominio + API, con tests automatizados** (P0-sys = b) | No se entrega interfaz; se asume un cliente externo consumidor de la API |
 | DD-02 | **Mono-tenant** (un consultorio, <50 personas) | (a) Mono-tenant; (b) Multi-tenant multi-clínica | Decisión explícita para enfocar el esfuerzo en la prevención de solapamientos (P0-scale = a) | Sin aislamiento por organización ni multi-sucursal en la v1; migrar a multi-tenant luego implica trabajo de modelo y auth |
-| DD-03 | **Java 21 + Spring Boot 3** | (a) Java + Spring; (b) Node.js/TypeScript | JUnit 5/AssertJ ya venían en la consigna; se pidió "stack robusto y estándar"; la trazabilidad de reglas exige tipado fuerte | Mayor boilerplate que Node; a cambio, tipado fuerte y ecosistema de test maduro |
-| DD-04 | **PostgreSQL** como base productiva | (a) PostgreSQL; (b) H2 también en prod; (c) MySQL | Necesitamos `EXCLUDE USING gist` con `tsrange`, que H2 no soporta, para la garantía anti-solapamiento a nivel DB | Requiere PostgreSQL en runtime (local o contenedor Docker); H2 queda sólo para tests |
-| DD-05 | **H2 en memoria** para testing | (a) H2; (b) Testcontainers PostgreSQL para todo | H2 es rápido y sin dependencias para tests unitarios/integración de dominio | H2 no reproduce el constraint de exclusión; ese caso se cubre con Testcontainers PostgreSQL |
-| DD-06 | **Constraint de exclusión** (`EXCLUDE USING gist` sobre `tsrange`) | (a) Sólo validación en aplicación; (b) Sólo constraint DB; (c) ambos | Garantía dura contra el solapamiento concurrente, no dependiente de la aplicación (RN-16) | Acopla el dominio a PostgreSQL; se documenta y se testea por separado con Testcontainers |
-| DD-07 | **Arquitectura hexagonal limpia** (domain/application/infrastructure) | (a) Hexagonal; (b) MVC en capas acoplado a framework | Aísla las reglas `RN-NN` para testearlas sin framework y facilita H2/Postgres | Más paquetes/mappers; requiere disciplina para no filtrar JPA al dominio |
-| DD-08 | **Transacción por caso de uso + locking** (optimista + pesimista) | (a) Sin locking; (b) locking optimista; (c) pesimista; (d) ambos + constraint | El riesgo principal es el agendamiento concurrente entre canales | Complejidad de manejo de errores de concurrencia (traducir `OptimisticLock`/`23P01` a `409`) |
+| DD-03 | **Python 3.12+ + FastAPI/Pydantic** | Selección anterior Java/Spring, sustituida; Node/TS quedó descartado en la fundación | Indicación docente del 2026-10-01 confirmada por Juan el 2026-10-15 | SQLAlchemy, Alembic y pytest; historia preservada en el registro de ajuste |
+| DD-04 | **PostgreSQL** como base productiva y de integración | Motores sin constraint de exclusión | Garantía de exclusión sobre ambos recursos | PostgreSQL real necesario para integración y concurrencia |
+| DD-05 | **pytest**: unitarios puros con fakes; integración en PostgreSQL real | H2 era parte del stack Java anterior y queda sustituido | Separar pruebas de reglas y pruebas de persistencia | Un fake no demuestra constraints ni concurrencia |
+| DD-06 | **Constraint de exclusión** (`EXCLUDE USING gist` sobre `tsrange`) | (a) Sólo validación en aplicación; (b) Sólo constraint DB; (c) ambos | Garantía dura contra el solapamiento concurrente, no dependiente de la aplicación (RN-16) | Acopla la persistencia a PostgreSQL; se documenta y se testea por separado con Testcontainers |
+| DD-07 | **Arquitectura hexagonal limpia** | MVC acoplado a framework | Aísla RN-NN de FastAPI/Pydantic/SQLAlchemy | ORM sólo en infraestructura; DTOs Pydantic sólo en frontera |
+| DD-08 | **Transacción por caso de uso + locking** (optimista + pesimista) | (a) Sin locking; (b) locking optimista; (c) pesimista; (d) ambos + constraint | El riesgo principal es el agendamiento concurrente entre canales | Complejidad de manejo de errores de concurrencia (traducir `StaleDataError`/`23P01` a `409`) |
 | DD-09 | **Recordatorios por scheduler + WhatsApp** en MVP | (a) WhatsApp; (b) email; (c) SMS | El caso de uso pide confirmación por WhatsApp y ataca el ausentismo | Depende de la disponibilidad de WhatsApp Business API (ver pregunta abierta) |
 | DD-10 | **JWT stateless con RBAC** | (a) JWT; (b) sesión en servidor | API pura sin UI; sencillo de escalar y testear | Hay que gestionar expiración/refresh y validar firma de webhooks aparte |
 
@@ -29,24 +29,23 @@
 **Justificación:** mantener la concentración en la prevención de solapamientos.
 **Trade-offs aceptados:** no sirve tal cual para varias clínicas; requeriría cambios de modelo/auth para escalar.
 
-### DD-03 — Java + Spring vs. Node/TS (detalle)
-**Decisión:** Java 21 + Spring Boot 3.
-**Contexto:** elección de stack (P4).
-**Alternativas consideradas:** Node.js/TypeScript (descartada).
-**Justificación:** JUnit 5/AssertJ ya venían en la consigna; se pidió stack robusto y estándar; la trazabilidad de reglas de negocio exige tipado fuerte.
-**Trade-offs aceptados:** mayor verbosidad/boilerplate frente a Node/TS.
+### DD-03 — Stack corregido por consigna docente
+**Decisión vigente:** Python 3.12+, FastAPI/Pydantic, SQLAlchemy, Alembic y pytest.
+**Origen:** indicación docente del 2026-10-01 en el chat de metodología, confirmada por Juan el 2026-10-15.
+**Historia:** la fundación había elegido Java 21/Spring Boot 3 y afirmado que JUnit/AssertJ eran obligatorios. Esa interpretación quedó sustituida; no representa la consigna vigente. No se modifica el Discovery ni se recrea evidencia pasada.
+**Trazabilidad:** [ajuste-stack-python.md](../docs/decisiones/ajuste-stack-python.md).
 
-### DD-04 — PostgreSQL vs. H2 en producción (detalle)
-**Decisión:** PostgreSQL en producción; H2 sólo para tests.
-**Alternativas consideradas:** H2 también en producción; MySQL.
-**Justificación:** el constraint de exclusión con `tsrange` requiere PostgreSQL.
-**Trade-offs aceptados:** dependencia de un motor específico y de una extensión (`btree_gist`).
+### DD-04 — PostgreSQL
+**Decisión:** PostgreSQL en producción e integración. El constraint de exclusión y `btree_gist` siguen siendo la defensa de persistencia planificada.
 
-### DD-05 — Constraint de exclusión (detalle)
+### DD-05 — Pruebas separadas por capa
+**Decisión:** pytest para unitarios de dominio y aplicación con fakes. pytest sobre PostgreSQL real para repositorios, transacciones, constraint y concurrencia. Pasar los unitarios no demuestra la garantía concurrente.
+
+### DD-06 — Constraint de exclusión
 **Decisión:** reforzar RN-01/RN-03/RN-16 con `EXCLUDE USING gist`.
 **Alternativas consideradas:** sólo validación de aplicación.
 **Justificación:** el riesgo de doble reserva concurrente exige garantía a nivel DB.
-**Trade-offs aceptados:** acoplamiento a Postgres; se prueba con Testcontainers.
+**Trade-offs aceptados:** dependencia de PostgreSQL en infraestructura; se prueba con PostgreSQL real (Docker Compose o Testcontainers para Python).
 
 ## Supuestos inferidos
 
