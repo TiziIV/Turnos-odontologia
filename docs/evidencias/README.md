@@ -17,4 +17,4 @@ No mostrar claves, accesos a grabaciones privadas, conversaciones ajenas ni dato
 
 ## Memoria inicial disponible
 
-El 15/10/2026 se guardó en Engram el recuerdo #3, «Stack confirmado: Python FastAPI y pytest», con la decisión del stack y las reglas leídas del repositorio. Esto acredita el guardado, no la recuperación desde una sesión posterior. Esa recuperación y su captura siguen pendientes.
+El 15/10/2026 se guardó en Engram el recuerdo #3, «Stack confirmado: Python FastAPI y pytest». La consulta posterior (`engram search` y `engram context`) quedó en `etapa-7-engram-consulta.png`.

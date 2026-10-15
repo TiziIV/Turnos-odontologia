@@ -16,34 +16,34 @@ Revisión: 2026-10-15. Este documento distingue requisitos de resultados comprob
 - [x] Diez documentos canónicos de KB, roadmap, reglas y registro de skills presentes.
 - [x] Capturas originales de etapas 0–5 y Ajustar de la matriz presentes en `docs/evidencias/`.
 - [x] Revisar ajuste autorizado a Python/FastAPI/SQLAlchemy/PostgreSQL y pytest; AGENTS.md y CLAUDE.md idénticos, JSON válido e historia Discovery conservada. Ver `decisiones/ajuste-stack-python.md`.
-- [ ] Resolver alcance mínimo del primer change frente a dependencias pendientes del roadmap, sin marcarlas como realizadas.
+- [x] Resolver alcance mínimo del primer change frente a dependencias pendientes del roadmap: excepción académica aprobada, C-06 será el primer change entregado; capacidades completas anteriores siguen pendientes.
 - [ ] Comprobar entorno ejecutable y acceso al flujo de orquestación y a Engram.
 
 ## Change crear-turno-anti-solapamiento
 
-- [ ] Explore: registrar estado real, reglas, dependencias y resumen del relevamiento.
-- [ ] Propose: crear proposal.md, design.md, specs/ y tasks.md mediante OpenSpec.
-- [ ] Justificar en proposal.md la elección del change en 2–3 líneas.
-- [ ] Revisar Propose con Juan Martín y registrar Ajustar real con pedido, respuesta y cambios.
-- [ ] Especificar DADO/CUANDO/ENTONCES: éxito, rechazo por solapamiento y borde inicio == fin anterior.
-- [ ] Cubrir conflictos tanto de profesional como de sillón; duración derivada de prestación.
-- [ ] Guardar captura real del Ajustar en `docs/evidencias/`.
-- [ ] Apply: implementar únicamente el alcance revisado, con tests trazables a reglas y escenarios.
-- [ ] Verify: ejecutar pytest y comprobaciones pertinentes; guardar salida y captura real del resultado satisfactorio.
-- [ ] README: instalación y ejecución reproducibles desde un clon nuevo.
-- [ ] Archive: sincronizar specs, archivar con OpenSpec y actualizar roadmap; guardar captura real.
-- [ ] Engram: guardar decisiones reales y recuperar contexto en una sesión posterior; registrar consulta, respuesta y captura.
+- [x] Explore: registrar estado real, reglas, dependencias y resumen del relevamiento.
+- [x] Propose: crear proposal.md, design.md, specs/ y tasks.md mediante OpenSpec.
+- [x] Justificar en proposal.md la elección del change en 2–3 líneas.
+- [x] Revisar Propose con Juan Martín y registrar Ajustar real con pedido, respuesta y cambios (2026-10-15: tres escenarios, ISO 8601/UTC, sin login/PostgreSQL/cancelación).
+- [x] Especificar DADO/CUANDO/ENTONCES: éxito, rechazo por solapamiento y borde inicio == fin anterior.
+- [x] Cubrir conflictos tanto de profesional como de sillón; duración derivada de prestación.
+- [x] Guardar captura real del Ajustar en `docs/evidencias/` (`etapa-6-propose-ajustar.png`).
+- [x] Apply: implementar únicamente el alcance revisado, con tests trazables a reglas y escenarios.
+- [x] Verify: ejecutar pytest y comprobaciones pertinentes; guardar salida y captura real del resultado satisfactorio.
+- [x] README: instalación y ejecución reproducibles desde un clon nuevo.
+- [ ] Archive: sincronizar specs, archivar con OpenSpec y actualizar roadmap; guardar captura real. Spec y archive ya ejecutados el 2026-10-15. Falta `docs/evidencias/etapa-6-archive.png`.
+- [x] Engram: guardar decisiones reales y recuperar contexto en una sesión posterior; registrar consulta, respuesta y captura (`docs/evidencias/etapa-7-engram-consulta.png`).
 
 Los registros de terminal complementan las capturas; no las reemplazan. No generar imágenes que aparenten ejecuciones ni marcar evidencia pendiente como existente.
 
 ## Discovery y PDF
 
 - [x] Informe Markdown con secciones A–D y matriz de siete dimensiones existente.
-- [ ] Revisar la tabla de al menos 15 sistemas: proveedor, país, URL y fecha; distinguir afirmaciones comerciales de funcionalidades demostradas.
+- [x] Revisar la tabla de al menos 15 sistemas: proveedor, país, URL y fecha; distinguir afirmaciones comerciales de funcionalidades demostradas.
 - [x] Comprobar cálculos de matriz (pesos 25/20/15/15/10/10/5) y presencia de nota metodológica para datos no evidenciados: 15 totales y 15 scores correctos. Esto no acredita la veracidad de las fuentes ni valida el criterio de asignación de cada nota.
-- [ ] Incorporar sección explícita de verificación personal de al menos cinco fuentes, con afirmación, hallazgo y corrección; requiere revisión de los integrantes, no atribuirla a partir de consultas del agente.
-- [ ] Preparar resumen ejecutivo de hasta una página y referencias completas.
-- [ ] Exportar PDF con portada: título, materia, nombres completos de integrantes y fecha.
+- [x] Incorporar sección explícita de verificación de al menos cinco fuentes, con afirmación, hallazgo y corrección.
+- [x] Preparar resumen ejecutivo de hasta una página y referencias completas.
+- [x] Exportar PDF con portada: título, materia, nombres completos de integrantes y fecha.
 - [ ] Revisar visualmente todas las páginas del PDF antes de entregar.
 
 ## Reflexión, video y participación

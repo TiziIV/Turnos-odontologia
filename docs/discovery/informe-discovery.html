@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Informe de Discovery</title>
+<style>
+  @page { margin: 16mm; }
+  body { font-family: Georgia, serif; font-size: 11pt; line-height: 1.4; color: #111; }
+  h1 { font-size: 18pt; }
+  h2 { font-size: 14pt; page-break-after: avoid; margin-top: 1.2em; }
+  h3 { font-size: 12pt; page-break-after: avoid; }
+  table { border-collapse: collapse; width: 100%; font-size: 8pt; margin: 0.6em 0 1em; }
+  th, td { border: 1px solid #bbb; padding: 3px 4px; vertical-align: top; }
+  th { background: #f3f3f3; }
+  code { font-size: 9pt; }
+</style>
+</head>
+<body>
+<h1>Gestión de turnos y agenda para consultorios odontológicos</h1>
+<p><strong>Materia:</strong> Metodología I — Tecnicatura Universitaria en Programación</p>
+<p><strong>Integrantes:</strong> García Juan Martín y Tiziano Valentini</p>
+<p><strong>Fecha de consulta:</strong> 15 de octubre de 2026</p>
+<hr />
+<h2>Resumen ejecutivo</h2>
+<p>Se relevaron 15 sistemas de gestión odontológica o de agenda, con prioridad en Argentina y alcance a Latinoamérica y a dos suites españolas utilizables como referencia. Cada celda sale de la nota pública de <code>discovery/sources/</code>. Donde el sitio no demuestra una función, el informe dice <strong>No evidenciado</strong>.</p>
+<p>La reserva online y los recordatorios automáticos son el estándar publicado. El hueco está en el turno como recurso doble: un profesional y un sillón libres a la vez, con duración tomada de la prestación y sin solapamiento estricto. Solo DentalSoft publica detección de solapamiento de forma explícita. Solo XDental y Reservo publican duración por tipo de atención. Nadie publica el paquete completo.</p>
+<p>La matriz de la cátedra (25/20/15/15/10/10/5) ordena por evidencia pública, no por calidad real. DentalSoft queda primero (76/100), seguido por Doctocliq (71) y Dentalink (67). Tres sitios no aportaron contenido (OdontoSaaS, DentalData y Dentap) y puntúan 0.</p>
+<p>El MVP imprescindible es esa agenda de recurso doble. Cancelación con liberación de cupo y recordatorio quedan en el mismo alcance de producto. Odontograma, periodontograma, radiología e IA de diagnóstico quedan para después. La entrega implementa solo la creación del turno sin solapamientos.</p>
+<hr />
+<h1>Discovery — turnos-odontologia</h1>
+<p><strong>Fecha</strong>: 2026-10-15
+<strong>Fuentes investigadas</strong>: 15 proveedores (ver <code>discovery/sources/</code>)
+<strong>Artefacto canónico</strong>: <code>discovery/discovery.md</code></p>
+<blockquote>
+<p><strong>Regla de evidencia</strong>: este informe no agrega datos que no estén respaldados por las
+15 notas de <code>discovery/sources/</code>. Donde una nota no respalda una celda, en la Sección A se
+escribe literalmente <strong>No evidenciado</strong> y en la Sección B se puntúa <code>0&lt;sup&gt;NE&lt;/sup&gt;</code> (misma
+convención: vacío de evidencia, no ausencia probada). Las limitaciones de evidencia de la
+fase de scraping están documentadas en la Sección 0 (nota de evidencia) y en la Sección A.</p>
+</blockquote>
+<hr />
+<h2>Sección 0 — Consolidación de los 11 puntos de Discovery</h2>
+<p><strong>1. Problema</strong>
+Pérdida de ingresos por ausentismo, solapamiento de turnos entre profesionales y sillones
+odontológicos, y falta de automatización de recordatorios en consultorios de Argentina.</p>
+<p><strong>2. Usuarios</strong>
+Pacientes, odontólogos generales y especialistas, y recepcionistas/secretarias del consultorio.</p>
+<p><strong>3. Casos de uso</strong>
+Reserva online 24/7; agendamiento de turno por secretaria evitando solapamiento (por
+profesional y por sillón/box); cancelación con liberación inmediata de cupo; confirmación
+vía WhatsApp.</p>
+<p><strong>4. Competidores</strong>
+Los 15 proveedores listados (Dentalink, DentalSoft, Doctocliq, DentiDesk, OdontoSaaS,
+Reservo, Clinic Cloud, XDental, DentalData, Medilink, AgendaPro, Nubimed, Dentap,
+OdontoCloud, Nimbo Clinic).</p>
+<p><strong>5. Funcionalidades necesarias (MVP)</strong>
+Gestión de agenda con duración por prestación; asignación simultánea de profesional y
+sillón; prevención de solapamientos; cancelación/reprogramación; recordatorio automático.</p>
+<p><strong>6. Funcionalidades opcionales</strong>
+Odontograma interactivo 3D; periodontograma avanzado; integración de radiología digital;
+IA de diagnóstico.</p>
+<p><strong>7. Reglas de negocio</strong>
+(a) un turno requiere simultáneamente profesional disponible Y sillón/box libre en esa
+franja; (b) la duración depende del tipo de prestación (limpieza 30m, endodoncia 60m);
+(c) prohibido el solapamiento estricto — un turno puede iniciar en el minuto exacto en que
+finaliza el anterior.</p>
+<p><strong>8. Integraciones</strong>
+WhatsApp Business API, Mercado Pago (señas), Google Calendar.</p>
+<p><strong>9. Restricciones</strong>
+Ley 25.326 de Protección de Datos Personales (Argentina); no almacenar datos sensibles
+reales en repositorios o pruebas.</p>
+<p><strong>10. Riesgos</strong>
+Agendamiento simultáneo concurrente de turnos online y recepción presencial.</p>
+<p><strong>11. Preguntas abiertas</strong>
+Disponibilidad de API oficial de WhatsApp para consultorios pequeños vs. soluciones no
+oficiales.</p>
+<h3>Nota de evidencia (fase de scraping)</h3>
+<p>Durante la fase de investigación se registraron las siguientes limitaciones, que condicionan
+la lectura de la Sección A:</p>
+<ul>
+<li><code>https://dentaldata.com.ar/</code> → el dominio <strong>no resuelve</strong> (<code>Transport error</code>). Nota sin datos.</li>
+<li><code>https://dentap.co/</code> → el dominio <strong>no resuelve</strong> (NXDOMAIN). Nota sin datos.</li>
+<li><code>https://odontosaas.com/</code> → devolvió sólo el <em>shell</em> de una SPA React (sin features ni
+  pricing reales); sólo se recuperaron meta tags. Sin pricing.</li>
+<li><code>https://xdental.com.br/</code> → dominio <strong>estacionado/reutilizado</strong> (redirige a un sitio
+  ajeno); el producto real está en <code>xdentalcontrole.com.br</code> (fue la URL usada).</li>
+<li><code>https://odontocloud.com.ar/</code> → <strong>no existe</strong> (NXDOMAIN); el OdontoCloud real está en
+  <code>odontocloud.com.br</code> (fue la URL usada).</li>
+<li><strong>Sin pricing público</strong>: Dentalink, OdontoSaaS, DentiDesk, Nimbo Clinic, Medilink,
+  XDental, OdontoCloud (y los 2 sin datos: DentalData, Dentap).</li>
+<li><strong>Con pricing público</strong>: DentalSoft (ARS 30.000/60.000), Doctocliq (USD 19/29/49),
+  Reservo (Bs 99/149/229), Clinic Cloud (29€/49€/79€), Nubimed (27,40€/50,10€),
+  AgendaPro (ARS, en <code>/ar/planes</code>).</li>
+</ul>
+<hr />
+<h2>Sección A — Tabla comparativa de los 15 sistemas</h2>
+<p>Orden aproximado de relevancia para un consultorio argentino: productos con presencia o precio en Argentina primero, después suites latinoamericanas, y al final los sitios sin contenido público.</p>
+<table>
+<thead>
+<tr>
+<th>Sistema</th>
+<th>Proveedor</th>
+<th>País</th>
+<th>Segmento</th>
+<th>URL oficial</th>
+<th>Fecha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DentalSoft</td>
+<td>DentalSoft</td>
+<td>Argentina</td>
+<td>Clínica y profesional odontológico</td>
+<td>https://dentalsoft.com.ar/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>AgendaPro</td>
+<td>AgendaPro</td>
+<td>Argentina / Latinoamérica</td>
+<td>Negocios de servicios y clínicas, no exclusivo dental</td>
+<td>https://agendapro.com/ar/planes</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>Dentalink</td>
+<td>Healthatom</td>
+<td>Chile; opera en Latinoamérica y España</td>
+<td>Consultorio a clínica con sucursales</td>
+<td>https://www.softwaredentalink.com/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>Medilink</td>
+<td>Healthatom</td>
+<td>Chile, Colombia, México</td>
+<td>Centro de salud por tamaño y especialidad</td>
+<td>https://www.softwaremedilink.com/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>Doctocliq</td>
+<td>Doctocliq</td>
+<td>Latinoamérica</td>
+<td>Médicos, odontólogos y clínicas</td>
+<td>https://doctocliq.com/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>Nimbo Clinic</td>
+<td>Ecaresoft Inc.</td>
+<td>México, Argentina, Ecuador, Perú</td>
+<td>Clínicas y centros médicos</td>
+<td>https://www.nimbo-x.com/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>DentiDesk</td>
+<td>DentiDesk</td>
+<td>Chile</td>
+<td>Clínicas dentales, odontólogos, universidades</td>
+<td>https://dentidesk.com/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>Reservo</td>
+<td>Reservo</td>
+<td>Bolivia</td>
+<td>Profesionales multi-rubro</td>
+<td>https://reservo.lat/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>OdontoCloud</td>
+<td>Score Web</td>
+<td>Brasil</td>
+<td>Consultorio a red; incluye laboratorio de prótesis</td>
+<td>http://www.odontocloud.com.br/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>XDental</td>
+<td>XDental</td>
+<td>Brasil</td>
+<td>Dentista, consultorio y clínica</td>
+<td>https://www.xdentalcontrole.com.br/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>OdontoSaaS</td>
+<td>No evidenciado</td>
+<td>Brasil</td>
+<td>No evidenciado</td>
+<td>https://odontosaas.com/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>Clinic Cloud</td>
+<td>Doctoralia</td>
+<td>España</td>
+<td>Clínica y consulta médica</td>
+<td>https://clinic-cloud.com/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>Nubimed</td>
+<td>Nubimed</td>
+<td>España</td>
+<td>Clínica y profesional, con vertical dental</td>
+<td>https://nubimed.com/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>DentalData</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>https://dentaldata.com.ar/</td>
+<td>2026-10-15</td>
+</tr>
+<tr>
+<td>Dentap</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>https://dentap.co/</td>
+<td>2026-10-15</td>
+</tr>
+</tbody>
+</table>
+<p>La tabla siguiente distingue funcionalidad publicada de lo no demostrado. Una afirmación comercial del sitio no se toma como función comprobada.</p>
+<p>Notas al pie:
+- † OdontoSaaS: SPA React; sólo se recuperó el shell HTML + meta tags (features/pricing reales no accesibles).
+- ‡ DentalData: dominio no resuelve (<code>Transport error</code>); sin datos.
+- § Dentap: dominio no resuelve (NXDOMAIN); sin datos.
+- ¶ XDental: <code>xdental.com.br</code> es dominio estacionado/reutilizado; se investigó <code>xdentalcontrole.com.br</code>.
+- ‖ OdontoCloud: <code>odontocloud.com.ar</code> no existe (NXDOMAIN); se investigó <code>odontocloud.com.br</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Sistema</th>
+<th>URL investigada</th>
+<th>Origen/País</th>
+<th>Problema que resuelve</th>
+<th>Usuarios objetivo</th>
+<th>Pricing público</th>
+<th>Reserva online 24/7</th>
+<th>Duración por prestación</th>
+<th>Profesional + sillón simultáneo</th>
+<th>Prevención de solapamiento</th>
+<th>Cancelación/reprogramación</th>
+<th>Recordatorios automáticos</th>
+<th>Multi-sucursal/multiprofesional</th>
+<th>Integraciones</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dentalink</td>
+<td>https://www.softwaredentalink.com/</td>
+<td>LATAM (Chile, Colombia, México, España)</td>
+<td>Gestión integral de clínica dental: agenda, fichas clínicas, cobros y seguros en un solo lugar</td>
+<td>Consultorios dentales de todos los tamaños (independientes a clínicas con varios profesionales y sucursales)</td>
+<td>No evidenciado (sólo "solicita tu cotización")</td>
+<td>Sí (link público de reserva)</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>Sí (confirmación correo/WhatsApp/llamada; recordatorios email)</td>
+<td>Sí (multicentro, multi-sucursal, comisiones por odontólogo)</td>
+<td>No evidenciado</td>
+</tr>
+<tr>
+<td>DentalSoft</td>
+<td>https://dentalsoft.com.ar/</td>
+<td>Argentina (La Plata / Rosario)</td>
+<td>Reducir ausencias, ordenar historias clínicas, automatizar turnos y dar presencia web profesional</td>
+<td>Clínicas y profesionales odontológicos de Argentina (1 a 10+ profesionales; incluye secretarias)</td>
+<td>Sí — ARS 30.000/mes (Gestión) y ARS 60.000/mes (Pro), + plan Gratis</td>
+<td>Sí (turnos online 24/7)</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>Sí (detección automática de solapamiento)</td>
+<td>Sí (si el paciente confirma/cancela, la agenda se actualiza sola)</td>
+<td>Sí (WhatsApp y email automáticos)</td>
+<td>Sí (multi-sucursal y multiprofesional)</td>
+<td>Sí (Google Calendar; MercadoPago; WhatsApp)</td>
+</tr>
+<tr>
+<td>Doctocliq</td>
+<td>https://doctocliq.com/</td>
+<td>LATAM (+20 países; adaptaciones fiscales Perú, México, Ecuador, Colombia)</td>
+<td>Suite todo-en-uno que centraliza pacientes, agenda, finanzas y marketing para recuperar y fidelizar pacientes</td>
+<td>Doctores, odontólogos y clínicas multi-especialidad; propietarios, doctores, asistentes y recepcionistas</td>
+<td>Sí — USD 19/29/49/mes (Individual/Básico/Avanzado), + plan Gratis</td>
+<td>Sí (link de agendamiento + Soyla IA 24/7)</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>Sí (WhatsApp, email y SMS)</td>
+<td>Sí (sedes adicionales + usuarios doctor)</td>
+<td>Sí (Google Calendar; WhatsApp; pago por link en Perú)</td>
+</tr>
+<tr>
+<td>DentiDesk</td>
+<td>https://dentidesk.com/</td>
+<td>Chile (Santiago); opera LatAm</td>
+<td>Simplificar y optimizar la gestión clínica dental, reduciendo tiempos de espera</td>
+<td>Clínicas dentales y odontólogos (equipo clínico y administrativo); también universidades y sindicatos</td>
+<td>No evidenciado (sólo prueba 15 días y demo)</td>
+<td>Parcial (botón/link de agendamiento online; 24/7 no explicitado)</td>
+<td>No evidenciado (publica intervalo de agendamiento 15/30/40 min, no duración por prestación)</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>Sí a nivel manual (modifica y reprograma; confirmar/anular desde correo; sin liberación automática de cupo)</td>
+<td>Sí por email (WhatsApp automático "próximamente")</td>
+<td>Sí (multi-sucursal destacada)</td>
+<td>Sí (SII de Chile; Alegra para República Dominicana)</td>
+</tr>
+<tr>
+<td>OdontoSaaS †</td>
+<td>https://odontosaas.com/</td>
+<td>Brasil (pt-BR, BRL)</td>
+<td>Sistema odontológico completo para gestión de clínicas (agenda inteligente, prontuario, financiero, marketing, IA)</td>
+<td>No evidenciado</td>
+<td>No evidenciado (sólo "teste grátis 7 días")</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+</tr>
+<tr>
+<td>Reservo</td>
+<td>https://reservo.lat/</td>
+<td>Bolivia (Bs; LatAm)</td>
+<td>Reservas online 24h sin llamadas ni cruces de horarios, para ahorrar trabajo administrativo</td>
+<td>Profesionales y negocios multi-rubro (barbería, salud, gimnasio, consultoría; clínicas) — no exclusivo odontología</td>
+<td>Sí — Bs 99/149/229/mes (Emprendedor/Negocio/Equipo)</td>
+<td>Sí (agenda online 24 h)</td>
+<td>Sí ("establece la duración de cada cita")</td>
+<td>No evidenciado</td>
+<td>Sí (bloqueo automático contra dobles reservas)</td>
+<td>No evidenciado</td>
+<td>Sí (email o WhatsApp)</td>
+<td>Multiprofesional sí (agenda independiente por miembro); multi-sucursal no evidenciado</td>
+<td>No evidenciado</td>
+</tr>
+<tr>
+<td>Clinic Cloud</td>
+<td>https://clinic-cloud.com/</td>
+<td>España (ecosistema Doctoralia)</td>
+<td>Gestión integral de la clínica de principio a fin desde un solo lugar</td>
+<td>Clínicas y consultas médicas de España (segmenta por momento del negocio; franquicias en Enterprise)</td>
+<td>Sí — 29€/49€/79€/mes (Mini/Pro/Max), + Enterprise a convenir</td>
+<td>Sí (reserva online 24/7 + Doctoralia)</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado (sí "optimiza huecos")</td>
+<td>No evidenciado</td>
+<td>Sí (WhatsApp, SMS y email con recordatorios y confirmaciones)</td>
+<td>Sí (multi-profesional y multi-sede)</td>
+<td>Sí (Doctoralia)</td>
+</tr>
+<tr>
+<td>XDental ¶</td>
+<td>https://www.xdentalcontrole.com.br/</td>
+<td>Brasil (Brasilia)</td>
+<td>Gestión completa de consultorios y clínicas odontológicas sin controles en papel/Excel/PDF</td>
+<td>Dentistas y clínicas odontológicas de Brasil (profesionales individuales, consultorios, clínicas y hospitales)</td>
+<td>No evidenciado (sólo "solicitar orçamento" y demo gratis)</td>
+<td>No evidenciado</td>
+<td>Sí (duración de tiempo configurable por atendimiento)</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>Sí (SMS desde la agenda con actualización automática de estado; email marketing)</td>
+<td>Multiprofesional sí (múltiples agendas por especialista/especialidad); multi-sucursal no evidenciado</td>
+<td>Sí (NFS-e/NF-e; integración contable; certificado digital)</td>
+</tr>
+<tr>
+<td>DentalData ‡</td>
+<td>https://dentaldata.com.ar/</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+</tr>
+<tr>
+<td>Medilink</td>
+<td>https://www.softwaremedilink.com/</td>
+<td>LATAM (Chile, Colombia, México); grupo Healthatom</td>
+<td>Optimizar la operación del centro de salud unificando procesos (agenda, inasistencia, tareas manuales)</td>
+<td>Centros de salud y consultas de LatAm, por tamaño (Esencial/Pro/Titanium) y por especialidad</td>
+<td>No evidenciado (planes sin importes; precio según cantidad de médicos)</td>
+<td>Sí (agendamiento online)</td>
+<td>Parcial (gestiona las horas del día por profesional y por paciente)</td>
+<td>No evidenciado ("gestión de recursos" como pista, sin detalle)</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>Sí (email ilimitado + WhatsApp; confirmaciones como add-on)</td>
+<td>Sí (gestión de sucursales / multisucursal)</td>
+<td>Sí (Google Calendar; Google Analytics 4; Bsale; Meta)</td>
+</tr>
+<tr>
+<td>AgendaPro</td>
+<td>https://agendapro.com/ (AR: /ar/planes)</td>
+<td>LatAm / Argentina (n°1 AR)</td>
+<td>Organizar citas, cobrar sin fricción y hacer crecer el negocio (multi-vertical)</td>
+<td>Negocios de belleza/bienestar y salud (salones, spa, clínicas, kinesiología, psicología, etc.); 1 a 20+ profesionales</td>
+<td>Sí — ARS 13.900/33.900/44.900/314.900/mes (Individual/Básico/Premium/Pro)</td>
+<td>Sí (reservas 24/7)</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>Sí (WhatsApp y email)</td>
+<td>Sí (multi-sucursal y multiprofesional)</td>
+<td>Sí (Google Reserve/GMB; Google Analytics; Meta Pixel)</td>
+</tr>
+<tr>
+<td>Nubimed</td>
+<td>https://nubimed.com/</td>
+<td>España</td>
+<td>Gestión integral de la clínica en la nube (agenda, citas online, recordatorios, historia clínica, facturación)</td>
+<td>Clínicas y profesionales médicos de España, con vertical dental</td>
+<td>Sí — 27,40€/mes (LITE) y 50,10€/mes (PREMIUM); MULTICENTRO a consultar</td>
+<td>Sí (cita online 24h)</td>
+<td>No evidenciado</td>
+<td>No evidenciado (sí sala de espera y lista de espera)</td>
+<td>No evidenciado</td>
+<td>Parcial (confirmar/cancelar desde el recordatorio; cobertura de huecos vía lista de espera)</td>
+<td>Sí (email/SMS/WhatsApp)</td>
+<td>Sí (multicentro, multi-profesional)</td>
+<td>Sí (WhatsApp; IA en la comunicación)</td>
+</tr>
+<tr>
+<td>Dentap §</td>
+<td>https://dentap.co/</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+</tr>
+<tr>
+<td>OdontoCloud ‖</td>
+<td>http://www.odontocloud.com.br/</td>
+<td>Brasil (São Paulo; Score Web)</td>
+<td>Gestión odontológica gerencial y operacional unificada, sin otros controles en papel/Excel/PDF</td>
+<td>Clínicas y consultorios odontológicos de Brasil, del recién graduado a grandes redes; incluye laboratorios de prótesis</td>
+<td>No evidenciado (precio único; sólo cotización)</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>Sí (alertas automáticas de conflictos de agendamiento)</td>
+<td>Sí (cancelar y reagendar desde telemarketing)</td>
+<td>Sí (SMS, WhatsApp y email automáticos con confirmación del paciente)</td>
+<td>Sí (multi-unidad; agendas por profesional)</td>
+<td>No evidenciado</td>
+</tr>
+<tr>
+<td>Nimbo Clinic</td>
+<td>https://www.nimbo-x.com/</td>
+<td>LatAm (México, Argentina, Ecuador, Perú); Ecaresoft Inc.</td>
+<td>Solución todo-en-uno para administrar clínicas (expedientes, agenda, facturación, reputación)</td>
+<td>Clínicas y centros médicos de LatAm (incluye dentistas); organización de más de 10 médicos</td>
+<td>No evidenciado (modelo modular, "solicita los precios")</td>
+<td>Sí (agendamiento online vía portal web)</td>
+<td>Parcial ("configura los tiempos de tu equipo médico")</td>
+<td>Sí (en vertical de infusión: agenda considerando "un médico o de un cuarto o sillón")</td>
+<td>No evidenciado</td>
+<td>No evidenciado</td>
+<td>Sí (WhatsApp y email)</td>
+<td>Sí (agenda multi-médico; productos/servicios por sucursal)</td>
+<td>Sí (Stripe para cobro de citas; Google Calendar)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Lectura de la tabla</strong>: la reserva online y los recordatorios automáticos son las features
+más extendidas entre los proveedores. Las celdas en <strong>No evidenciado</strong> se concentran justamente
+en los criterios diferenciales del proyecto: duración por prestación configurable y asignación
+simultánea de profesional + sillón/box.</p>
+<hr />
+<h2>Sección B — Matriz de decisión ponderada</h2>
+<blockquote>
+<p>Esta sección se recalculó por completo con un esquema de <strong>7 dimensiones y pesos fijados por la
+cátedra</strong>. Los puntajes <strong>no son comparables</strong> con la versión anterior (eran otros criterios) y
+el ranking se reordenó de punta a punta. Cada celda se puntuó exclusivamente con lo respaldado
+por las notas de <code>discovery/sources/</code>.</p>
+</blockquote>
+<h3>B.1 Dimensiones y pesos (esquema obligatorio)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Dimensión</th>
+<th>Peso</th>
+<th>Por qué (1 línea)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Gestión de turnos y automatización</td>
+<td>25%</td>
+<td>Corazón operativo del proyecto: agenda digital, reserva online, duración, solapamiento, recordatorios y multi-agenda</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Funcionalidad odontológica clínica</td>
+<td>20%</td>
+<td>Separa a los sistemas dentales nativos de las suites de clínica general</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Integraciones locales y WhatsApp</td>
+<td>15%</td>
+<td>Conectividad real con el ecosistema local (WhatsApp, pagos, fiscal, obras sociales)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Administración, cobros y facturación</td>
+<td>15%</td>
+<td>Sostiene la operación económica del consultorio (caja, presupuestos, comisiones)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Experiencia del paciente</td>
+<td>10%</td>
+<td>Portal, autogestión y telemedicina reducen carga administrativa y ausentismo</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Seguridad, exportación y trazabilidad</td>
+<td>10%</td>
+<td>Requisito para datos clínicos sensibles y para la confianza del consultorio</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Precio y facilidad de adopción</td>
+<td>5%</td>
+<td>Importa para la PyME argentina, pero no es el eje del dominio</td>
+</tr>
+</tbody>
+</table>
+<h3>B.2 Definiciones operativas (para que el puntaje sea reproducible)</h3>
+<ol>
+<li><strong>Gestión de turnos y automatización (25%)</strong>: agenda digital, reserva/agendamiento online, duración por prestación, prevención de solapamiento, asignación de recursos simultáneos (profesional + sillón), reprogramación/cancelación, recordatorios automáticos y multi-agenda/multiprofesional.</li>
+<li><strong>Funcionalidad odontológica clínica (20%)</strong>: odontograma, periodontograma, historia clínica dental, módulo de ortodoncia, imágenes/radiología, estética facial, plantillas y presupuestos de tratamiento y firma electrónica dental.</li>
+<li><strong>Integraciones locales y WhatsApp (15%)</strong>: WhatsApp (Business/API), Mercado Pago y pagos locales, Google Calendar, Google Reserve/GMB, facturación fiscal local (SII Chile, NFS-e Brasil, AFIP/ARCA Argentina), obras sociales/prepagas/convenios y conexión con Doctoralia u otros marketplaces.</li>
+<li><strong>Administración, cobros y facturación (15%)</strong>: facturación, cobros y cajas, presupuestos, financiamiento/cuotas, seguros/convenios, inventario, comisiones y liquidaciones a profesionales, reportes de gestión y multicentro.</li>
+<li><strong>Experiencia del paciente (10%)</strong>: portal/área del paciente, autogestión de la cita, telemedicina/videoconsulta, encuestas de satisfacción/NPS, fidelización y email marketing y lista de espera.</li>
+<li><strong>Seguridad, exportación y trazabilidad (10%)</strong>: certificaciones (ISO 27001, HIPAA, GDPR, OIV), respaldos y cifrado, trazabilidad/auditoría, exportación de datos y reportes y control de acceso por rol.</li>
+<li><strong>Precio y facilidad de adopción (5%)</strong>: pricing público y transparente, accesibilidad PyME, prueba gratis/onboarding, migración asistida y modelo de cobro (por profesional/sucursal).</li>
+</ol>
+<h3>B.3 Fórmula y convención de evidencia</h3>
+<p><strong>Escala</strong>: 0–5 por dimensión. Se puntúa <strong>sólo con lo respaldado por la nota</strong>; nada de conocimiento previo sobre la empresa.</p>
+<ul>
+<li><strong>Puntaje ponderado</strong> (sin normalizar) = Σ(peso_% × puntaje_0a5); máximo posible = 500.</li>
+<li><strong>Score normalizado /100</strong> = Σ(peso_% × puntaje_0a5) / 5; con todas las dimensiones en 5 da 100.</li>
+</ul>
+<p><strong>Convención de evidencia faltante (NE)</strong> — nota al pie:</p>
+<blockquote>
+<p><code>NE</code> = el sitio no publica evidencia; es un <strong>vacío de evidencia, no una ausencia probada</strong>.</p>
+</blockquote>
+<p>Donde la nota no respalda el criterio se puntúa <code>0&lt;sup&gt;NE&lt;/sup&gt;</code>. Ante duda razonable entre dos
+valores se eligió el menor (regla de prudencia) y se anotó la duda en la lectura.</p>
+<h3>B.4 Matriz de decisión (15 sistemas, ordenados por ranking)</h3>
+<p>Las celdas <code>0&lt;sup&gt;NE&lt;/sup&gt;</code> no están respaldadas por la nota (ver B.3). Los 3 sistemas sin datos
+(OdontoSaaS, DentalData, Dentap) quedan con <code>0&lt;sup&gt;NE&lt;/sup&gt;</code> en las 7 dimensiones.</p>
+<table>
+<thead>
+<tr>
+<th>Sistema</th>
+<th>D1 (25)</th>
+<th>D2 (20)</th>
+<th>D3 (15)</th>
+<th>D4 (15)</th>
+<th>D5 (10)</th>
+<th>D6 (10)</th>
+<th>D7 (5)</th>
+<th>Puntaje ponderado</th>
+<th>Score /100</th>
+<th>Ranking</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DentalSoft</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>5</td>
+<td>3</td>
+<td>1</td>
+<td>5</td>
+<td>380</td>
+<td>76.0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Doctocliq</td>
+<td>3</td>
+<td>5</td>
+<td>3</td>
+<td>5</td>
+<td>3</td>
+<td>1</td>
+<td>4</td>
+<td>355</td>
+<td>71.0</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Dentalink</td>
+<td>3</td>
+<td>4</td>
+<td>2</td>
+<td>5</td>
+<td>3</td>
+<td>4</td>
+<td>1</td>
+<td>335</td>
+<td>67.0</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Nubimed</td>
+<td>3</td>
+<td>3</td>
+<td>3</td>
+<td>5</td>
+<td>4</td>
+<td>2</td>
+<td>4</td>
+<td>335</td>
+<td>67.0</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Clinic Cloud</td>
+<td>3</td>
+<td>3</td>
+<td>3</td>
+<td>5</td>
+<td>3</td>
+<td>1</td>
+<td>4</td>
+<td>315</td>
+<td>63.0</td>
+<td>5</td>
+</tr>
+<tr>
+<td>DentiDesk</td>
+<td>2</td>
+<td>5</td>
+<td>2</td>
+<td>4</td>
+<td>3</td>
+<td>1</td>
+<td>2</td>
+<td>290</td>
+<td>58.0</td>
+<td>6</td>
+</tr>
+<tr>
+<td>OdontoCloud</td>
+<td>4</td>
+<td>2</td>
+<td>1</td>
+<td>4</td>
+<td>2</td>
+<td>3</td>
+<td>2</td>
+<td>275</td>
+<td>55.0</td>
+<td>7</td>
+</tr>
+<tr>
+<td>Nimbo Clinic</td>
+<td>3</td>
+<td>2</td>
+<td>2</td>
+<td>4</td>
+<td>4</td>
+<td>2</td>
+<td>1</td>
+<td>270</td>
+<td>54.0</td>
+<td>8</td>
+</tr>
+<tr>
+<td>XDental</td>
+<td>3</td>
+<td>2</td>
+<td>2</td>
+<td>4</td>
+<td>2</td>
+<td>3</td>
+<td>2</td>
+<td>265</td>
+<td>53.0</td>
+<td>9</td>
+</tr>
+<tr>
+<td>Medilink</td>
+<td>3</td>
+<td>0<sup>NE</sup></td>
+<td>4</td>
+<td>5</td>
+<td>3</td>
+<td>1</td>
+<td>2</td>
+<td>260</td>
+<td>52.0</td>
+<td>10</td>
+</tr>
+<tr>
+<td>AgendaPro</td>
+<td>3</td>
+<td>0<sup>NE</sup></td>
+<td>3</td>
+<td>5</td>
+<td>3</td>
+<td>1</td>
+<td>4</td>
+<td>255</td>
+<td>51.0</td>
+<td>11</td>
+</tr>
+<tr>
+<td>Reservo</td>
+<td>4</td>
+<td>0<sup>NE</sup></td>
+<td>1</td>
+<td>0<sup>NE</sup></td>
+<td>1</td>
+<td>0<sup>NE</sup></td>
+<td>4</td>
+<td>145</td>
+<td>29.0</td>
+<td>12</td>
+</tr>
+<tr>
+<td>OdontoSaaS</td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0</td>
+<td>0.0</td>
+<td>13</td>
+</tr>
+<tr>
+<td>DentalData</td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0</td>
+<td>0.0</td>
+<td>13</td>
+</tr>
+<tr>
+<td>Dentap</td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0<sup>NE</sup></td>
+<td>0</td>
+<td>0.0</td>
+<td>13</td>
+</tr>
+</tbody>
+</table>
+<h3>B.5 Lectura de resultados</h3>
+<ul>
+<li><strong>Qué cambió respecto del foco "agendamiento"</strong>: el esquema anterior concentraba ~62% del peso
+  en criterios de agenda (solapamiento 20 + recordatorios 15 + reserva online 15 + duración 12).
+  El nuevo baja la gestión de turnos a un 25% y traslada masa crítica a los ejes clínico (20%),
+  administrativo/facturación (15%) e integraciones locales (15%). Como consecuencia, el ranking
+  dejó de premiar casi en exclusiva a las herramientas de reservas y pasó a ordenar suites
+  dentales/administrativas.</li>
+<li><strong>Sistemas que suben por su peso clínico/administrativo</strong>: <strong>Doctocliq</strong> (6 → 2) por
+  odontograma/periodontograma/estética facial/firma electrónica + facturación multi-país;
+  <strong>Dentalink</strong> (10 → 3) por odontograma + periodontograma + ortodoncia + rayos X, seguridad
+  enterprise (ISO 27001/HIPAA/GDPR) y liquidaciones; <strong>DentiDesk</strong> (11 → 6) por sus fichas de
+  especialidad (periodoncia, ortodoncia, cirugía) y facturación SII. <strong>Nubimed</strong> se sostiene 4.º
+  por su combo dental nativo + facturación/liquidaciones.</li>
+<li><strong>Sistemas que bajan</strong>: <strong>Reservo</strong> (2 → 12, la mayor caída) y <strong>AgendaPro</strong> (5 → 11) porque son
+  herramientas multi-rubro sin funcionalidad dental ni módulos administrativos/seguridad;
+  <strong>Nimbo Clinic</strong> (3 → 8) cae porque su señal de sillón sólo aparece en su vertical de infusión y
+  no publica odontograma/periodontograma ni precio.</li>
+<li><strong>Empate técnico</strong>: Dentalink y Nubimed terminan ambos en 335; se desempata por D1 y luego por
+  D2 (Dentalink 3/4 vs. Nubimed 3/3), por eso Dentalink queda 3.º.</li>
+<li><strong>Aclaración obligatoria</strong>: el ranking mide <strong>cuánta evidencia pública</strong> hay en cada sitio,
+  <strong>no la calidad real</strong> del producto. Un <code>0&lt;sup&gt;NE&lt;/sup&gt;</code> indica que el criterio no está
+  publicado (los tools B2B suelen reservar esas features para la demo), no que la función no
+  exista. Los tres ceros del fondo (OdontoSaaS, DentalData, Dentap) son vacíos de evidencia: dos
+  dominios no resuelven y una SPA no sirvió contenido.</li>
+</ul>
+<hr />
+<h2>Sección C — Análisis competitivo</h2>
+<h3>Segmentación del mercado</h3>
+<p>Se distinguen tres capas:</p>
+<ol>
+<li><strong>Odontológico puro</strong>: DentalSoft, Dentalink, DentiDesk, XDental, OdontoCloud y Nubimed
+   (con vertical dental nativa: odontograma/periodontograma). Son los competidores más
+   cercanos al dominio, aunque con distinto foco (DentalSoft hacia el turno/agenda; Dentalink
+   y Medilink hacia gestión clínica/financiera enterprise; XDental y OdontoCloud hacia gestión
+   integral con suites fiscales/legales).</li>
+<li><strong>Clínicas generales</strong>: Doctocliq, Clinic Cloud, Medilink y Nimbo Clinic. Cubren agenda y
+   recordatorios para múltiples especialidades; la odontología es una vertical más.</li>
+<li><strong>Agenda genérica / multi-rubro</strong>: Reservo y AgendaPro. No son odontológicos; sirven como
+   referencia de UX de reservas y de modelo de precios, no como competidores directos.</li>
+</ol>
+<h3>Qué hace (casi) todo el mundo</h3>
+<p>Reserva/agendamiento online, recordatorios automáticos (WhatsApp/SMS/email), agenda digital y
+multi-profesional aparecen en la gran mayoría de las notas. Son <strong>features de entrada</strong>, no
+diferenciadores: cualquiera que evalúe el mercado las da por sentadas.</p>
+<h3>Qué NO evidencia casi nadie (el hueco)</h3>
+<p>El hueco competitivo está en el <strong>corazón operativo del agendamiento odontológico</strong>:</p>
+<ul>
+<li><strong>Asignación simultánea de profesional + sillón/box</strong>: no aparece como concepto explícito en
+  casi ninguna nota. La única excepción parcial es <strong>Nimbo Clinic</strong>, que en su vertical de
+  clínicas de infusión menciona agendar considerando "un médico o de un cuarto o sillón"; no hay
+  evidencia de que traslade ese modelo al agendamiento dental de sillón. <strong>Medilink</strong> menciona
+  "gestión de recursos" como pista, sin detalle.</li>
+<li><strong>Duración configurable por prestación como eje del agendamiento</strong>: sólo <strong>XDental</strong>
+  (duración por atendimiento) y <strong>Reservo</strong> (duración de cada cita) lo evidencian; <strong>DentiDesk</strong>
+  publica un <em>intervalo</em> de agendamiento (15/30/40 min), que no es lo mismo que duración por
+  tipo de prestación; <strong>Nimbo</strong> ("configura los tiempos") y <strong>Medilink</strong> ("horas por profesional
+  y por paciente") lo evidencian de forma parcial.</li>
+<li><strong>Anti-solapamiento explícito</strong>: sólo <strong>DentalSoft</strong> lo evidencia de forma explícita
+  ("detección automática de solapamiento"); <strong>OdontoCloud</strong> lo hace como "alertas automáticas de
+  conflictos de agendamiento" y <strong>Reservo</strong> como bloqueo contra dobles reservas (genérico).</li>
+</ul>
+<p>En síntesis: nadie comunica públicamente <strong>el recurso doble (profesional + sillón) como
+invariante del turno</strong>, combinado con duración por prestación. Ese es el corredor del proyecto.</p>
+<h3>Localización</h3>
+<ul>
+<li><strong>Argentina / LatAm reales</strong>: DentalSoft (AR nativo), AgendaPro (AR nativo), Medilink y
+  Dentalink (LatAm, grupo Healthatom), Doctocliq y Nimbo Clinic (LatAm multi-país), Reservo
+  (Bolivia), DentiDesk (Chile), OdontoCloud y XDental (Brasil).</li>
+<li><strong>España / internacional</strong>: Clinic Cloud (España, ligado a Doctoralia) y Nubimed (España).
+  Ambos tienen cumplimiento fiscal español (Verifactu/TicketBAI) y no están planteados para la
+  normativa argentina (obras sociales/prepagas), aunque Doctoralia opera en Argentina y vuelve a
+  Clinic Cloud un competidor indirecto plausible.</li>
+<li><strong>Sin datos</strong>: DentalData y Dentap (dominios caídos), OdontoSaaS (SPA vacía).</li>
+</ul>
+<h3>Modelo de pricing</h3>
+<p>Predomina la suscripción mensual por cantidad de profesionales y/o sucursales. Rangos
+detectados donde hay precio público: DentalSoft ARS 30.000–60.000; AgendaPro ARS
+13.900–314.900; Reservo Bs 99–229; Doctocliq USD 19–49; Clinic Cloud 29€–79€; Nubimed
+27,40€–50,10€. El resto (Dentalink, DentiDesk, Medilink, Nimbo, XDental, OdontoCloud,
+OdontoSaaS) cobra por cotización ("solicitar demo"), típico de venta B2B enterprise. Los planes
+"Gratis/prueba" existen como gancho (DentalSoft 3 meses, Doctocliq free, pruebas de 7–30 días).</p>
+<h3>Riesgo competitivo y ventana de oportunidad</h3>
+<p>El riesgo es que vendors enterprise (Dentalink/Medilink) o genéricos baratos (Reservo,
+AgendaPro) ya cubren reserva online y recordatorios, y que los dentales puros (XDental,
+OdontoCloud) cubren duración/anti-conflicto por separado. Nuestra ventana está en el <strong>corredor
+de agendamiento con recurso doble</strong>: modelar el turno como intersección de disponibilidad de
+<strong>profesional</strong> y de <strong>sillón/box</strong>, con <strong>duración derivada del tipo de prestación</strong> y
+anti-solapamiento estricto, en un producto pensado para la <strong>realidad PyME argentina</strong>
+(obras sociales, precios en ARS, soporte local). Ningún proveedor comunica ese paquete completo.</p>
+<hr />
+<h2>Sección D — MVP recomendado</h2>
+<h3>Cinco competidores para una demo</h3>
+<ol>
+<li>DentalSoft, por ser el único con anti-solapamiento explícito y precio en pesos.</li>
+<li>Doctocliq, por la suite clínica y el precio público en dólares.</li>
+<li>Dentalink, por la ficha odontológica y la operación multi-sucursal.</li>
+<li>Nubimed, por la vertical dental con cita online y precio publicado.</li>
+<li>AgendaPro, por la reserva 24/7 y los planes en pesos, como referencia de agenda genérica.</li>
+</ol>
+<h3>Tres referencias de experiencia de quien reserva</h3>
+<ol>
+<li>DentalSoft: el paciente elige profesional, fecha y horario en un enlace público.</li>
+<li>Doctocliq: enlace de agendamiento y canal de WhatsApp publicados.</li>
+<li>Clinic Cloud: reserva online asociada a un marketplace (Doctoralia).</li>
+</ol>
+<p>Alcance derivado de la Sección 0 (los 5 puntos "necesarios") cruzado con el hueco de la
+Sección C.</p>
+<h3>Imprescindible, diferenciador y etapas posteriores</h3>
+<ul>
+<li><strong>Imprescindible:</strong> agenda con duración por prestación, profesional y sillón a la vez, y rechazo del solapamiento. El intervalo admite que el siguiente turno empiece exactamente cuando termina el anterior.</li>
+<li><strong>Diferenciador:</strong> ese recurso doble como regla del turno, no como un campo opcional. Es el vacío que la Sección C no encuentra publicado en forma completa.</li>
+<li><strong>Etapas posteriores:</strong> cancelación con liberación de cupo, recordatorio, WhatsApp, Mercado Pago, Google Calendar, odontograma, periodontograma, radiología e IA de diagnóstico.</li>
+</ul>
+<h3>Alcance IN (priorizado)</h3>
+<ol>
+<li><strong>Gestión de agenda con duración por prestación</strong> — base del modelo; la duración del turno
+   se deriva del tipo de prestación (p. ej. limpieza 30m, endodoncia 60m).</li>
+<li><strong>Asignación simultánea de profesional y sillón/box</strong> — recurso doble obligatorio por turno;
+   es el hueco competitivo detectado en la Sección C.</li>
+<li><strong>Prevención de solapamientos</strong> — invariante que bloquea doble asignación de cualquiera de
+   los dos recursos en la misma franja.</li>
+<li><strong>Cancelación/reprogramación con liberación inmediata de cupo</strong> — caso de uso explícito.</li>
+<li><strong>Recordatorio automático</strong> — ataca el ausentismo (principal pérdida de ingresos).</li>
+</ol>
+<h3>Alcance OUT / backlog post-MVP</h3>
+<p>Los 4 funcionalidades opcionales quedan fuera de la v1:
+- Odontograma interactivo 3D.
+- Periodontograma avanzado.
+- Integración de radiología digital.
+- IA de diagnóstico.</p>
+<h3>Reglas de negocio no negociables (invariantes verificables)</h3>
+<ol>
+<li><strong>Recurso doble</strong>: un turno sólo puede confirmarse si en su franja horaria existe a la vez
+   profesional disponible <strong>y</strong> sillón/box libre. Si falta alguno de los dos, el turno no se crea.</li>
+<li><strong>Duración por prestación</strong>: la duración del turno es una función del tipo de prestación
+   (limpieza 30m, endodoncia 60m, y así por cada prestación definida); no es un valor fijo global.</li>
+<li><strong>Anti-solapamiento estricto</strong>: para un mismo profesional o un mismo sillón, un turno puede
+   iniciar <strong>en el minuto exacto</strong> en que finaliza el anterior, pero nunca antes; el intervalo
+   <code>[inicio, fin)</code> no puede intersectarse con ningún otro turno del mismo recurso.</li>
+</ol>
+<h3>Integraciones del MVP (orden sugerido)</h3>
+<p>Del punto 8 de la Sección 0, en este orden de valor:
+1. <strong>WhatsApp Business API</strong> — soporta el caso de uso #4 (confirmación vía WhatsApp) y el
+   recordatorio automático (funcionalidad necesaria #5).
+2. <strong>Google Calendar</strong> — sincronización de agenda; bajo esfuerzo, alto valor percibido.
+3. <strong>Mercado Pago (señas)</strong> — cobro de seña; utilizable después de estabilizar el flujo de
+   turnos (depende de la decisión sobre política de seña).</p>
+<h3>Restricciones legales/técnicas desde el día 1</h3>
+<ul>
+<li><strong>Ley 25.326 de Protección de Datos Personales (Argentina)</strong>: tratamiento de datos personales
+  de pacientes conforme a la ley.</li>
+<li><strong>No almacenar datos sensibles reales</strong> en repositorios ni en entornos de prueba; usar datos
+  sintéticos o anonimizados en desarrollo y testing.</li>
+</ul>
+<h3>Riesgo principal y mitigación</h3>
+<p><strong>Riesgo</strong>: agendamiento simultáneo concurrente de turnos online y recepción presencial (dos
+actores pueden intentar tomar el mismo recurso en la misma franja al mismo tiempo).
+<strong>Mitigación de alto nivel</strong>: tratar la creación de turno como una operación atómica con
+control de concurrencia a nivel de recurso (profesional y sillón) — reserva transaccional /
+bloqueo por franja — y verificación de disponibilidad en el momento de confirmar, no sólo al
+mostrar el calendario.</p>
+<h3>Criterios de aceptación del MVP</h3>
+<ul>
+<li>[ ] Un turno no puede crearse si falta disponibilidad de <strong>profesional</strong> o de <strong>sillón/box</strong> en la franja.</li>
+<li>[ ] La duración del turno se calcula automáticamente según el tipo de prestación seleccionado.</li>
+<li>[ ] Dos turnos del mismo profesional (o del mismo sillón) no pueden solaparse; se permite
+      encadenar exacto (fin de uno = inicio del siguiente).</li>
+<li>[ ] Una cancelación libera el cupo de ambos recursos de forma inmediata, dejándolo disponible
+      para una nueva reserva.</li>
+<li>[ ] La reserva online 24/7 y la agenda de recepción comparten la misma fuente de disponibilidad.</li>
+<li>[ ] Al crearse un turno, se programa un recordatorio automático (WhatsApp) según la
+      anticipación configurada.</li>
+<li>[ ] Un intento de doble reserva concurrente (online vs. recepción) sobre el mismo recurso
+      resuelve con éxito para uno y rechazo controlado para el otro.</li>
+<li>[ ] No hay datos sensibles reales en el repositorio ni en los entornos de prueba.</li>
+</ul>
+<hr />
+<h2>Cierre</h2>
+<h3>Supuestos</h3>
+<ul>
+<li>Que los 15 proveedores listados son una muestra representativa del mercado relevante para
+  consultorios odontológicos de Argentina.</li>
+<li>Que "No evidenciado" implica un <strong>vacío de evidencia</strong> (el sitio no lo publica), no una
+  ausencia real de la funcionalidad; los productos B2B suelen reservar features finas para la demo.</li>
+<li>Que la operación modelada es sobre sillón/box como recurso físico discreto, más allá de lo que
+  comuniquen los competidores.</li>
+<li>Que las restricciones legales se limitan a la Ley 25.326 para la v1.</li>
+</ul>
+<h3>Preguntas abiertas</h3>
+<ul>
+<li><strong>#11 (del Discovery)</strong>: ¿Existe API oficial de WhatsApp para consultorios pequeños o se
+  depende de soluciones no oficiales (riesgo de bloqueo y cumplimiento)?</li>
+<li>¿La duración por prestación debe ser configurable por el consultorio (por odontólogo) o un
+  catálogo fijo del sistema?</li>
+<li>¿El sillón/box es una entidad de primera clase (con su propia agenda) o un atributo opcional
+  del turno? ¿Puede haber turnos sin sillón (p. ej. teleconsulta)?</li>
+<li>¿Cómo se comporta la anti-solapamiento ante sobreturnos/urgencias (que DentalSoft sí contempla)?</li>
+<li>¿La seña con Mercado Pago es obligatoria para confirmar el turno o un extra opcional?</li>
+<li>¿Se requiere multi-sucursal en la v1 o alcanza con un solo consultorio (multi-profesional)?</li>
+<li>¿OdontoSaaS, DentalData y Dentap deben reintentarse con un navegador headless / URL corregida
+  antes de descartarlos como competidores?</li>
+</ul>
+<h2>Verificación de fuentes</h2>
+<p>Revisión del 15 de octubre de 2026 sobre cinco fuentes de distinto tipo. En cada una se anota qué decía el relevamiento, qué había en la URL y qué corrección quedó en el informe.</p>
+<table>
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Fuente</th>
+<th>Afirmación previa</th>
+<th>Hallazgo</th>
+<th>Corrección</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sitio oficial</td>
+<td>https://dentalsoft.com.ar/</td>
+<td>Software odontológico argentino con turnos online</td>
+<td>El sitio publica agenda, turnos 24/7 y detección automática de solapamiento. La cifra de clínicas es una afirmación comercial</td>
+<td>El solapamiento se consigna como publicado. La cantidad de clientes no se usa como evidencia de adopción verificada</td>
+</tr>
+<tr>
+<td>Precios</td>
+<td>https://dentalsoft.com.ar/ (planes Gestión y Pro)</td>
+<td>Precio no confirmado al iniciar el relevamiento</td>
+<td>Figuran ARS 30.000 y ARS 60.000 por mes, más un plan sin cargo con límite de turnos</td>
+<td>La tabla A y la matriz usan esos importes. El plan Pro es el que publica recordatorios automáticos; el plan Gestión publica envío manual</td>
+</tr>
+<tr>
+<td>Precios</td>
+<td>https://agendapro.com/ar/planes</td>
+<td>Agenda genérica con presencia en Argentina</td>
+<td>Hay planes públicos en pesos, desde ARS 13.900</td>
+<td>Se mantiene como referencia de precio y de reserva, no como sistema odontológico</td>
+</tr>
+<tr>
+<td>Otro (dominio distinto del esperado)</td>
+<td>https://xdental.com.br/ y https://www.xdentalcontrole.com.br/</td>
+<td>XDental en xdental.com.br</td>
+<td>xdental.com.br está estacionado. El producto publicado está en xdentalcontrole.com.br y ahí aparece duración por atención</td>
+<td>La fila de XDental apunta al dominio del producto. La duración se toma de ese sitio, no del dominio estacionado</td>
+</tr>
+<tr>
+<td>Otro (dominio inexistente)</td>
+<td>https://odontocloud.com.ar/ y http://www.odontocloud.com.br/</td>
+<td>OdontoCloud argentino en odontocloud.com.ar</td>
+<td>odontocloud.com.ar no resuelve. El sitio brasileño publica alertas de conflicto de agenda</td>
+<td>País corregido a Brasil y URL reemplazada. No se atribuye operación en Argentina</td>
+</tr>
+</tbody>
+</table>
+<h2>Referencias</h2>
+<p>Notas de investigación (esquema fijo de 8 campos):</p>
+<ul>
+<li><code>discovery/sources/dentalink.md</code></li>
+<li><code>discovery/sources/dentalsoft.md</code></li>
+<li><code>discovery/sources/doctocliq.md</code></li>
+<li><code>discovery/sources/dentidesk.md</code></li>
+<li><code>discovery/sources/odontosaas.md</code></li>
+<li><code>discovery/sources/reservo.md</code></li>
+<li><code>discovery/sources/clinic-cloud.md</code></li>
+<li><code>discovery/sources/xdental.md</code></li>
+<li><code>discovery/sources/dentaldata.md</code></li>
+<li><code>discovery/sources/medilink.md</code></li>
+<li><code>discovery/sources/agenda-pro.md</code></li>
+<li><code>discovery/sources/nubimed.md</code></li>
+<li><code>discovery/sources/dentap.md</code></li>
+<li><code>discovery/sources/odontocloud.md</code></li>
+<li><code>discovery/sources/nimbo-clinic.md</code></li>
+</ul>
+<p>Discrepancias de dominio documentadas:</p>
+<ul>
+<li><strong>XDental</strong>: consigna <code>xdental.com.br</code> (dominio estacionado/reutilizado) → producto real en
+  <code>xdentalcontrole.com.br</code>.</li>
+<li><strong>OdontoCloud</strong>: consigna <code>odontocloud.com.ar</code> (NXDOMAIN) → producto real en
+  <code>odontocloud.com.br</code>.</li>
+<li>(Adicionales) <strong>DentalData</strong> (<code>dentaldata.com.ar</code>, no resuelve) y <strong>Dentap</strong> (<code>dentap.co</code>,
+  NXDOMAIN): sin datos.</li>
+</ul>
+<h3>Fecha</h3>
+<p>2026-10-15.</p></body></html>

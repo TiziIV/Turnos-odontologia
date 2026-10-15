@@ -1,3 +1,25 @@
+# Gestión de turnos y agenda para consultorios odontológicos
+
+**Materia:** Metodología I — Tecnicatura Universitaria en Programación
+
+**Integrantes:** García Juan Martín y Tiziano Valentini
+
+**Fecha de consulta:** 15 de octubre de 2026
+
+---
+
+## Resumen ejecutivo
+
+Se relevaron 15 sistemas de gestión odontológica o de agenda, con prioridad en Argentina y alcance a Latinoamérica y a dos suites españolas utilizables como referencia. Cada celda sale de la nota pública de `discovery/sources/`. Donde el sitio no demuestra una función, el informe dice **No evidenciado**.
+
+La reserva online y los recordatorios automáticos son el estándar publicado. El hueco está en el turno como recurso doble: un profesional y un sillón libres a la vez, con duración tomada de la prestación y sin solapamiento estricto. Solo DentalSoft publica detección de solapamiento de forma explícita. Solo XDental y Reservo publican duración por tipo de atención. Nadie publica el paquete completo.
+
+La matriz de la cátedra (25/20/15/15/10/10/5) ordena por evidencia pública, no por calidad real. DentalSoft queda primero (76/100), seguido por Doctocliq (71) y Dentalink (67). Tres sitios no aportaron contenido (OdontoSaaS, DentalData y Dentap) y puntúan 0.
+
+El MVP imprescindible es esa agenda de recurso doble. Cancelación con liberación de cupo y recordatorio quedan en el mismo alcance de producto. Odontograma, periodontograma, radiología e IA de diagnóstico quedan para después. La entrega implementa solo la creación del turno sin solapamientos.
+
+---
+
 # Discovery — turnos-odontologia
 
 **Fecha**: 2026-10-15
@@ -81,6 +103,28 @@ la lectura de la Sección A:
 ---
 
 ## Sección A — Tabla comparativa de los 15 sistemas
+
+Orden aproximado de relevancia para un consultorio argentino: productos con presencia o precio en Argentina primero, después suites latinoamericanas, y al final los sitios sin contenido público.
+
+| Sistema | Proveedor | País | Segmento | URL oficial | Fecha |
+|---|---|---|---|---|---|
+| DentalSoft | DentalSoft | Argentina | Clínica y profesional odontológico | https://dentalsoft.com.ar/ | 2026-10-15 |
+| AgendaPro | AgendaPro | Argentina / Latinoamérica | Negocios de servicios y clínicas, no exclusivo dental | https://agendapro.com/ar/planes | 2026-10-15 |
+| Dentalink | Healthatom | Chile; opera en Latinoamérica y España | Consultorio a clínica con sucursales | https://www.softwaredentalink.com/ | 2026-10-15 |
+| Medilink | Healthatom | Chile, Colombia, México | Centro de salud por tamaño y especialidad | https://www.softwaremedilink.com/ | 2026-10-15 |
+| Doctocliq | Doctocliq | Latinoamérica | Médicos, odontólogos y clínicas | https://doctocliq.com/ | 2026-10-15 |
+| Nimbo Clinic | Ecaresoft Inc. | México, Argentina, Ecuador, Perú | Clínicas y centros médicos | https://www.nimbo-x.com/ | 2026-10-15 |
+| DentiDesk | DentiDesk | Chile | Clínicas dentales, odontólogos, universidades | https://dentidesk.com/ | 2026-10-15 |
+| Reservo | Reservo | Bolivia | Profesionales multi-rubro | https://reservo.lat/ | 2026-10-15 |
+| OdontoCloud | Score Web | Brasil | Consultorio a red; incluye laboratorio de prótesis | http://www.odontocloud.com.br/ | 2026-10-15 |
+| XDental | XDental | Brasil | Dentista, consultorio y clínica | https://www.xdentalcontrole.com.br/ | 2026-10-15 |
+| OdontoSaaS | No evidenciado | Brasil | No evidenciado | https://odontosaas.com/ | 2026-10-15 |
+| Clinic Cloud | Doctoralia | España | Clínica y consulta médica | https://clinic-cloud.com/ | 2026-10-15 |
+| Nubimed | Nubimed | España | Clínica y profesional, con vertical dental | https://nubimed.com/ | 2026-10-15 |
+| DentalData | No evidenciado | No evidenciado | No evidenciado | https://dentaldata.com.ar/ | 2026-10-15 |
+| Dentap | No evidenciado | No evidenciado | No evidenciado | https://dentap.co/ | 2026-10-15 |
+
+La tabla siguiente distingue funcionalidad publicada de lo no demostrado. Una afirmación comercial del sitio no se toma como función comprobada.
 
 Notas al pie:
 - † OdontoSaaS: SPA React; sólo se recuperó el shell HTML + meta tags (features/pricing reales no accesibles).
@@ -285,8 +329,28 @@ anti-solapamiento estricto, en un producto pensado para la **realidad PyME argen
 
 ## Sección D — MVP recomendado
 
+### Cinco competidores para una demo
+
+1. DentalSoft, por ser el único con anti-solapamiento explícito y precio en pesos.
+2. Doctocliq, por la suite clínica y el precio público en dólares.
+3. Dentalink, por la ficha odontológica y la operación multi-sucursal.
+4. Nubimed, por la vertical dental con cita online y precio publicado.
+5. AgendaPro, por la reserva 24/7 y los planes en pesos, como referencia de agenda genérica.
+
+### Tres referencias de experiencia de quien reserva
+
+1. DentalSoft: el paciente elige profesional, fecha y horario en un enlace público.
+2. Doctocliq: enlace de agendamiento y canal de WhatsApp publicados.
+3. Clinic Cloud: reserva online asociada a un marketplace (Doctoralia).
+
 Alcance derivado de la Sección 0 (los 5 puntos "necesarios") cruzado con el hueco de la
 Sección C.
+
+### Imprescindible, diferenciador y etapas posteriores
+
+- **Imprescindible:** agenda con duración por prestación, profesional y sillón a la vez, y rechazo del solapamiento. El intervalo admite que el siguiente turno empiece exactamente cuando termina el anterior.
+- **Diferenciador:** ese recurso doble como regla del turno, no como un campo opcional. Es el vacío que la Sección C no encuentra publicado en forma completa.
+- **Etapas posteriores:** cancelación con liberación de cupo, recordatorio, WhatsApp, Mercado Pago, Google Calendar, odontograma, periodontograma, radiología e IA de diagnóstico.
 
 ### Alcance IN (priorizado)
 
@@ -385,7 +449,19 @@ mostrar el calendario.
 - ¿OdontoSaaS, DentalData y Dentap deben reintentarse con un navegador headless / URL corregida
   antes de descartarlos como competidores?
 
-### Fuentes
+## Verificación de fuentes
+
+Revisión del 15 de octubre de 2026 sobre cinco fuentes de distinto tipo. En cada una se anota qué decía el relevamiento, qué había en la URL y qué corrección quedó en el informe.
+
+| Tipo | Fuente | Afirmación previa | Hallazgo | Corrección |
+|---|---|---|---|---|
+| Sitio oficial | https://dentalsoft.com.ar/ | Software odontológico argentino con turnos online | El sitio publica agenda, turnos 24/7 y detección automática de solapamiento. La cifra de clínicas es una afirmación comercial | El solapamiento se consigna como publicado. La cantidad de clientes no se usa como evidencia de adopción verificada |
+| Precios | https://dentalsoft.com.ar/ (planes Gestión y Pro) | Precio no confirmado al iniciar el relevamiento | Figuran ARS 30.000 y ARS 60.000 por mes, más un plan sin cargo con límite de turnos | La tabla A y la matriz usan esos importes. El plan Pro es el que publica recordatorios automáticos; el plan Gestión publica envío manual |
+| Precios | https://agendapro.com/ar/planes | Agenda genérica con presencia en Argentina | Hay planes públicos en pesos, desde ARS 13.900 | Se mantiene como referencia de precio y de reserva, no como sistema odontológico |
+| Otro (dominio distinto del esperado) | https://xdental.com.br/ y https://www.xdentalcontrole.com.br/ | XDental en xdental.com.br | xdental.com.br está estacionado. El producto publicado está en xdentalcontrole.com.br y ahí aparece duración por atención | La fila de XDental apunta al dominio del producto. La duración se toma de ese sitio, no del dominio estacionado |
+| Otro (dominio inexistente) | https://odontocloud.com.ar/ y http://www.odontocloud.com.br/ | OdontoCloud argentino en odontocloud.com.ar | odontocloud.com.ar no resuelve. El sitio brasileño publica alertas de conflicto de agenda | País corregido a Brasil y URL reemplazada. No se atribuye operación en Argentina |
+
+## Referencias
 
 Notas de investigación (esquema fijo de 8 campos):
 
