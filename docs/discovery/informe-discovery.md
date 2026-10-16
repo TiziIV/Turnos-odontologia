@@ -481,14 +481,11 @@ Notas de investigación (esquema fijo de 8 campos):
 - `discovery/sources/odontocloud.md`
 - `discovery/sources/nimbo-clinic.md`
 
-Discrepancias de dominio documentadas:
+Dominios corregidos en la consulta del 15 de octubre de 2026:
 
-- **XDental**: consigna `xdental.com.br` (dominio estacionado/reutilizado) → producto real en
-  `xdentalcontrole.com.br`.
-- **OdontoCloud**: consigna `odontocloud.com.ar` (NXDOMAIN) → producto real en
-  `odontocloud.com.br`.
-- (Adicionales) **DentalData** (`dentaldata.com.ar`, no resuelve) y **Dentap** (`dentap.co`,
-  NXDOMAIN): sin datos.
+- **XDental:** `xdental.com.br` está estacionado. El producto consultado está en `https://www.xdentalcontrole.com.br/`.
+- **OdontoCloud:** `odontocloud.com.ar` no existe. El producto consultado está en `http://www.odontocloud.com.br/`.
+- **DentalData** (`dentaldata.com.ar`) y **Dentap** (`dentap.co`) no resolvieron. Esas filas quedan sin datos.
 
 ### Fecha
 
