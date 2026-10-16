@@ -29,7 +29,6 @@ Los escenarios extra de la spec (un minuto de intersección, recursos distintos,
 - `openspec/changes/crear-turno-anti-solapamiento/specs/reserva-turnos/spec.md`
 - `openspec/changes/crear-turno-anti-solapamiento/tasks.md` (tarea 1.1 de Ajustar textual)
 - `docs/opsx/explore-crear-turno-anti-solapamiento.md`
-- `docs/control-entrega.md`
 
 ## Captura
 
