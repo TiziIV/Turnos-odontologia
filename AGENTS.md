@@ -184,3 +184,11 @@ Aplicar TODAS las reglas duras en cada paso. Ante conflicto entre la KB y este a
 - **Roadmap:** [`CHANGES.md`](CHANGES.md)
 - **Registro de skills + reglas compactas:** [`.atl/skill-registry.md`](.atl/skill-registry.md)
 - **OpenSpec:** [`openspec/`](openspec/)
+
+---
+
+## Skill propia y MCP (TPI, 2026-11-05)
+
+Usar `skills/revisar-escenarios-turno/SKILL.md` al escribir o revisar una spec de turnos. Pide tres escenarios (feliz, rechazo, borde), el intervalo semiabierto y el rechazo si chocan profesional y sillón a la vez. El resultado se revisa contra `knowledge-base/05_reglas_de_negocio.md` antes de dar la spec por cerrada.
+
+Context7 es un MCP, no una skill. Sirve para leer documentación de FastAPI o pytest. No guarda datos de pacientes ni credenciales. La configuración de ejemplo está en `docs/skills-mcp/mcp.example.json`.

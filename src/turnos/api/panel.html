@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Turnos del consultorio</title>
+  <style>
+    body { font-family: Georgia, serif; margin: 1.5rem; color: #142; background: #f7f6f2; }
+    nav button, form button { margin-right: .4rem; }
+    section { display: none; max-width: 40rem; }
+    section.activa { display: block; }
+    label { display: block; margin: .4rem 0; }
+    .aviso { min-height: 1.4rem; }
+  </style>
+</head>
+<body>
+  <h1>Consultorio de demostración</h1>
+  <p>Datos ficticios. Identificadores del README: paciente 1 o 2, profesional 1 o 2, sillón 1 o 2, limpieza 1.</p>
+  <nav>
+    <button type="button" data-pagina="agenda">Agenda</button>
+    <button type="button" data-pagina="reserva">Reserva</button>
+    <button type="button" data-pagina="espera">Espera</button>
+  </nav>
+  <p class="aviso" id="aviso"></p>
+
+  <section id="agenda" class="activa">
+    <h2>Agenda</h2>
+    <button type="button" id="refrescar">Actualizar</button>
+    <ul id="lista"></ul>
+  </section>
+
+  <section id="reserva">
+    <h2>Reserva</h2>
+    <form id="form-reserva">
+      <label>Paciente <input name="pacienteId" value="1" required></label>
+      <label>Profesional <input name="profesionalId" value="1" required></label>
+      <label>Sillón <input name="sillonId" value="1" required></label>
+      <label>Prestación <input name="prestacionId" value="1" required></label>
+      <label>Inicio <input name="inicio" value="2026-11-02T09:00:00-03:00" required></label>
+      <button type="submit">Pedir turno</button>
+    </form>
+  </section>
+
+  <section id="espera">
+    <h2>Espera</h2>
+    <form id="form-espera">
+      <label>Paciente <input name="pacienteId" value="2" required></label>
+      <label>Profesional <input name="profesionalId" value="1" required></label>
+      <label>Sillón <input name="sillonId" value="1" required></label>
+      <label>Prestación <input name="prestacionId" value="1" required></label>
+      <label>Inicio <input name="inicio" value="2026-11-02T09:00:00-03:00" required></label>
+      <button type="submit">Anotar espera</button>
+    </form>
+    <button type="button" id="asignar">Asignar la primera que entre</button>
+    <ul id="lista-espera"></ul>
+  </section>
+
+  <script>
+    const aviso = document.querySelector("#aviso");
+    function mostrar(id) {
+      document.querySelectorAll("section").forEach((seccion) => seccion.classList.remove("activa"));
+      document.querySelector("#" + id).classList.add("activa");
+    }
+    document.querySelectorAll("nav button").forEach((boton) => {
+      boton.addEventListener("click", () => mostrar(boton.dataset.pagina));
+    });
+    async function leer(url, opciones) {
+      const respuesta = await fetch(url, opciones);
+      const cuerpo = await respuesta.json().catch(() => ({}));
+      if (!respuesta.ok) {
+        const detalle = cuerpo.detail && cuerpo.detail.mensaje ? cuerpo.detail.mensaje : respuesta.status;
+        throw new Error(String(detalle));
+      }
+      return cuerpo;
+    }
+    async function cargarAgenda() {
+      const turnos = await leer("/api/turnos");
+      const lista = document.querySelector("#lista");
+      lista.innerHTML = "";
+      turnos.forEach((turno) => {
+        const item = document.createElement("li");
+        item.textContent = "#" + turno.id + " paciente " + turno.pacienteId + " " + turno.estado + " " + turno.inicio;
+        const cancelar = document.createElement("button");
+        cancelar.type = "button";
+        cancelar.textContent = "Cancelar";
+        cancelar.addEventListener("click", async () => {
+          try {
+            await leer("/api/turnos/" + turno.id + "/cancelar", { method: "POST" });
+            aviso.textContent = "Turno cancelado. El horario quedó libre.";
+            cargarAgenda();
+          } catch (error) {
+            aviso.textContent = error.message;
+          }
+        });
+        item.append(" ");
+        item.append(cancelar);
+        lista.append(item);
+      });
+    }
+    document.querySelector("#refrescar").addEventListener("click", () => cargarAgenda().catch((e) => aviso.textContent = e.message));
+    document.querySelector("#form-reserva").addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      const datos = Object.fromEntries(new FormData(evento.target));
+      try {
+        const turno = await leer("/api/public/turnos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pacienteId: Number(datos.pacienteId),
+            profesionalId: Number(datos.profesionalId),
+            sillonId: Number(datos.sillonId),
+            prestacionId: Number(datos.prestacionId),
+            inicio: datos.inicio
+          })
+        });
+        aviso.textContent = "Turno " + turno.id + " creado.";
+      } catch (error) {
+        aviso.textContent = error.message;
+      }
+    });
+    async function cargarEspera() {
+      const esperas = await leer("/api/espera");
+      const lista = document.querySelector("#lista-espera");
+      lista.innerHTML = "";
+      esperas.forEach((espera) => {
+        const item = document.createElement("li");
+        item.textContent = "Espera #" + espera.id + " paciente " + espera.pacienteId;
+        lista.append(item);
+      });
+    }
+    document.querySelector("#form-espera").addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      const datos = Object.fromEntries(new FormData(evento.target));
+      try {
+        await leer("/api/espera", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pacienteId: Number(datos.pacienteId),
+            profesionalId: Number(datos.profesionalId),
+            sillonId: Number(datos.sillonId),
+            prestacionId: Number(datos.prestacionId),
+            inicio: datos.inicio
+          })
+        });
+        aviso.textContent = "Anotado en espera. Todavía no hay turno.";
+        cargarEspera();
+      } catch (error) {
+        aviso.textContent = error.message;
+      }
+    });
+    document.querySelector("#asignar").addEventListener("click", async () => {
+      try {
+        const turno = await leer("/api/espera/asignar", { method: "POST" });
+        aviso.textContent = "Se asignó el turno " + turno.id + ".";
+        cargarEspera();
+      } catch (error) {
+        aviso.textContent = error.message;
+      }
+    });
+    cargarAgenda().catch(() => {});
+  </script>
+</body>
+</html>

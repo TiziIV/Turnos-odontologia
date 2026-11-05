@@ -28,8 +28,11 @@ def hay_conflicto(
     sillon_id: int,
     inicio: datetime,
     fin: datetime,
+    excluir_id: int | None = None,
 ) -> bool:
     for turno in existentes:
+        if excluir_id is not None and turno.id == excluir_id:
+            continue
         if turno.estado not in ESTADOS_ACTIVOS:
             continue
         if not comparte_recurso(turno, profesional_id, sillon_id):

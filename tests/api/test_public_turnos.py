@@ -124,9 +124,9 @@ def test_entrada_invalida_422(payload):
     assert respuesta.status_code == 422
 
 
-def test_no_expone_ruta_privada_de_mostrador():
+def test_no_expone_alta_de_mostrador_sin_autenticacion():
     respuesta = cliente().post("/api/turnos", json=cuerpo())
-    assert respuesta.status_code == 404
+    assert respuesta.status_code == 405
 
 
 def test_instancias_aisladas_no_comparten_agenda():

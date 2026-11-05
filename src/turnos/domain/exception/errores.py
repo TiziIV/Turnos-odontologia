@@ -36,3 +36,15 @@ class DatetimeSinZona(ErrorDeDominio):
 
 class EstadoInvalido(ErrorDeDominio):
     codigo = "ESTADO_INVALIDO"
+
+
+class TransicionInvalida(ErrorDeDominio):
+    codigo = "TRANSICION_INVALIDA"
+
+
+class EnlaceNoDisponible(ErrorDeDominio):
+    codigo = "ENLACE_NO_DISPONIBLE"
+
+
+class EsperaSinCupo(TurnoSolapado):
+    codigo = "ESPERA_SIN_CUPO"

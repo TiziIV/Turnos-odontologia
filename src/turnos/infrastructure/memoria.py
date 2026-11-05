@@ -1,6 +1,14 @@
 from typing import Optional
 
-from turnos.domain.model.entidades import Paciente, Prestacion, Profesional, Sillon, Turno
+from turnos.domain.model.entidades import (
+    EnlaceReserva,
+    Espera,
+    Paciente,
+    Prestacion,
+    Profesional,
+    Sillon,
+    Turno,
+)
 from turnos.infrastructure.catalogos import catalogos_sinteticos
 
 
@@ -63,6 +71,56 @@ class TurnoRepoMem:
         self._siguiente += 1
         self._turnos.append(asignado)
         return asignado
+
+    def obtener(self, turno_id: int) -> Optional[Turno]:
+        for turno in self._turnos:
+            if turno.id == turno_id:
+                return turno
+        return None
+
+    def reemplazar(self, turno: Turno) -> Turno:
+        for indice, actual in enumerate(self._turnos):
+            if actual.id == turno.id:
+                self._turnos[indice] = turno
+                return turno
+        raise KeyError(turno.id)
+
+
+class EnlaceRepoMem:
+    def __init__(self) -> None:
+        self._items: dict[str, EnlaceReserva] = {}
+
+    def guardar(self, enlace: EnlaceReserva) -> EnlaceReserva:
+        self._items[enlace.token] = enlace
+        return enlace
+
+    def obtener(self, token: str) -> Optional[EnlaceReserva]:
+        return self._items.get(token)
+
+
+class EsperaRepoMem:
+    def __init__(self) -> None:
+        self._items: list[Espera] = []
+        self._siguiente = 1
+
+    def listar(self) -> list[Espera]:
+        return list(self._items)
+
+    def guardar(self, espera: Espera) -> Espera:
+        asignada = Espera(
+            id=self._siguiente,
+            paciente_id=espera.paciente_id,
+            profesional_id=espera.profesional_id,
+            sillon_id=espera.sillon_id,
+            prestacion_id=espera.prestacion_id,
+            inicio=espera.inicio,
+        )
+        self._siguiente += 1
+        self._items.append(asignada)
+        return asignada
+
+    def quitar(self, espera_id: int) -> None:
+        self._items = [item for item in self._items if item.id != espera_id]
 
 
 def repositorios_demo() -> tuple[

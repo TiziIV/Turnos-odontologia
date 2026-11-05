@@ -7,6 +7,12 @@
 - **Generado por:** skill-registry
 - **Change ancla:** C-06 (`crear-turno-anti-solapamiento`)
 
+### Skill propia del TPI
+
+| Skill | Propósito | Ruta | Cuándo usarla |
+|---|---|---|---|
+| `revisar-escenarios-turno` | Revisar que una spec de turnos tenga feliz, rechazo y borde, y que el choque de profesional y sillón a la vez se rechace | `skills/revisar-escenarios-turno/SKILL.md` | Antes de cerrar proposal/spec de un change de agenda |
+
 ---
 
 ## Historia de la fundación anterior — no son instrucciones activas

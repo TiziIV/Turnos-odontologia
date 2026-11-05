@@ -527,6 +527,35 @@ Paso │ Agente A (Núcleo de agenda)      │ Agente B (Agenda auxiliar)       
 
 ---
 
+## TPI — changes agregados el 2026-11-05
+
+El parcial ya archivó C-06. Estos cinco changes están propuestos, aplicados, verificados y archivados. No completan login, PostgreSQL ni integraciones.
+
+### [C-20] `ficha-minima-del-turno`
+- **Estado**: `[x]` archivado en `openspec/changes/archive/2026-11-05-ficha-minima-del-turno`
+- **Alcance**: la ficha mínima es el `Paciente` sintético que ya existe. `GET /api/pacientes/{id}` la devuelve sin datos clínicos.
+- **Dependencias**: C-06
+
+### [C-21] `reserva-por-enlace`
+- **Estado**: `[x]` archivado en `openspec/changes/archive/2026-11-05-reserva-por-enlace`
+- **Alcance**: un enlace nombra un hueco. Si el alta entra, el turno queda y el enlace queda usado. Si se rechaza, el enlace sigue disponible.
+- **Dependencias**: C-06
+
+### [C-22] `confirmar-cancelar-reprogramar`
+- **Estado**: `[x]` archivado en `openspec/changes/archive/2026-11-05-confirmar-cancelar-reprogramar`
+- **Alcance**: confirmar sigue ocupando. Cancelar libera. Reprogramar no se cuenta a sí mismo. Si el destino se rechaza, el original no cambia.
+- **Dependencias**: C-06
+
+### [C-23] `lista-de-espera`
+- **Estado**: `[x]` archivado en `openspec/changes/archive/2026-11-05-lista-de-espera`
+- **Alcance**: anotar no crea un turno. Asignar toma la primera espera que pasa la regla de solapamiento.
+- **Dependencias**: C-06
+
+### [C-24] `panel-agenda-reserva-espera`
+- **Estado**: `[x]` archivado en `openspec/changes/archive/2026-11-05-panel-agenda-reserva-espera`
+- **Alcance**: pantalla en `/panel/` con Agenda, Reserva y Espera, servida por la misma API. Swagger sigue en `/docs`.
+- **Dependencias**: C-20, C-21, C-22, C-23
+
 ## Backlog OUT del MVP (no son changes)
 
 Funcionalidades explícitamente fuera del alcance de la v1 ([`01_vision_y_objetivos.md`](knowledge-base/01_vision_y_objetivos.md) §OUT): odontograma interactivo 3D, periodontograma avanzado, integración de radiología digital, IA de diagnóstico. No se planifican como changes hasta que la cátedra las incorpore.

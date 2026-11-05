@@ -1,8 +1,17 @@
 # Turnos odontológicos
 
-API de demostración para crear un turno que ocupa a la vez un profesional y un sillón. La duración sale de la prestación. El intervalo es semiabierto: un turno puede empezar en el instante exacto en que termina el anterior.
+API y pantalla de demostración para un consultorio. Un turno ocupa a la vez un profesional y un sillón. La duración sale de la prestación. El intervalo es semiabierto: un turno puede empezar en el instante exacto en que termina el anterior.
 
-No hay pantalla, login ni base de datos. Los datos viven en memoria de un solo proceso y se pierden al reiniciar. No se demuestra concurrencia PostgreSQL (RN-16).
+## Qué está completo
+
+- Crear un turno público (`POST /api/public/turnos`), archivado el 2026-10-15.
+- Ficha mínima: el paciente sintético que ya existe (`GET /api/pacientes/{id}`).
+- Reserva por enlace, confirmar, cancelar, reprogramar y lista de espera.
+- Pantalla en `/panel/` (Agenda, Reserva y Espera) y Swagger en `/docs`.
+
+## Qué falta
+
+Login, mostrador autenticado, PostgreSQL, recordatorios, Mercado Pago, WhatsApp y dos reservas simultáneas (RN-16). Los datos viven en memoria y se pierden al detener el servidor.
 
 ## Identificadores de la demo
 
@@ -62,6 +71,12 @@ python -m uvicorn turnos.api.app:app --host 127.0.0.1 --port 8000 --workers 1
 
 Reiniciar el proceso borra las reservas y vuelve a cargar el catálogo ficticio.
 
+Pantalla: http://127.0.0.1:8000/panel/
+
+Swagger: http://127.0.0.1:8000/docs
+
+El MCP de documentación, sin claves, está explicado en `docs/skills-mcp/investigacion.md`. El ejemplo es `docs/skills-mcp/mcp.example.json`.
+
 ## Ejemplos PowerShell
 
 Reserva válida (LIMPIEZA 30 minutos, 09:00-03:00 → 12:00Z / 12:30Z):
@@ -87,5 +102,5 @@ Códigos: 201 creado, 409 `TURNO_SOLAPADO`, 422 entrada o referencia inválida.
 ## Límites
 
 - Un proceso, datos en memoria, ejecución secuencial.
-- Sin login, sin `POST /api/turnos` de mostrador, sin cancelar, sin PostgreSQL.
-- La garantía contra dos reservas simultáneas en procesos distintos queda fuera de esta entrega.
+- Sin login y sin alta de mostrador autenticada. Cancelar sí está: `POST /api/turnos/{id}/cancelar`.
+- Sin PostgreSQL. La garantía contra dos reservas simultáneas en procesos distintos queda fuera.

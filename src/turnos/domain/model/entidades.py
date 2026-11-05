@@ -42,6 +42,27 @@ class Prestacion:
 
 
 @dataclass(frozen=True)
+class EnlaceReserva:
+    token: str
+    paciente_id: int
+    profesional_id: int
+    sillon_id: int
+    prestacion_id: int
+    inicio: datetime
+    usado: bool
+
+
+@dataclass(frozen=True)
+class Espera:
+    id: int
+    paciente_id: int
+    profesional_id: int
+    sillon_id: int
+    prestacion_id: int
+    inicio: datetime
+
+
+@dataclass(frozen=True)
 class Turno:
     id: int
     paciente_id: int
