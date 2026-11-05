@@ -66,6 +66,7 @@ def test_confirmar_ocupa_cancelar_libera_y_reprogramar_es_atomica():
     cancelado = http.post(f"/api/turnos/{creado['id']}/cancelar")
     assert cancelado.json()["estado"] == "CANCELADO"
     assert http.post("/api/public/turnos", json=reserva(pacienteId=2)).status_code == 201
+    assert http.post(f"/api/turnos/{creado['id']}/cancelar").status_code == 409
 
 
 def test_espera_no_crea_turno_y_asigna_la_primera_que_entra():

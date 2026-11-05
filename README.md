@@ -75,7 +75,13 @@ Pantalla: http://127.0.0.1:8000/panel/
 
 Swagger: http://127.0.0.1:8000/docs
 
-El MCP de documentación, sin claves, está explicado en `docs/skills-mcp/investigacion.md`. El ejemplo es `docs/skills-mcp/mcp.example.json`.
+## Skill propia y MCP
+
+La skill `revisar-escenarios-turno` está en `skills/revisar-escenarios-turno/SKILL.md`. Se usa al escribir una spec de turnos. Pide un caso que entra, uno que se rechaza y el borde en que el siguiente empieza cuando el anterior termina. Está registrada en `.atl/skill-registry.md` y citada en `AGENTS.md`.
+
+El MCP es Context7. No es una skill y no lleva clave. El ejemplo está en `docs/skills-mcp/mcp.example.json`. En Cursor se agrega ese bloque a la configuración de MCP del usuario y se reinicia el agente. La conexión se comprueba si aparecen las herramientas `resolve-library-id` y `query-docs`.
+
+Si Context7 no aparece, el agente no lo tiene cargado en esa sesión. No es un fallo del código de turnos. Hay que habilitar el servidor y abrir una sesión nueva. La ficha y el informe están en `docs/skills-mcp/`.
 
 ## Ejemplos PowerShell
 

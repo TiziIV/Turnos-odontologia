@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 from turnos.application.service.agenda import AgendaService
 from turnos.application.service.crear_turno import CrearTurnoService
-from turnos.domain.exception.errores import ErrorDeDominio, TurnoSolapado
+from turnos.domain.exception.errores import ErrorDeDominio, TransicionInvalida, TurnoSolapado
 from turnos.infrastructure.memoria import EnlaceRepoMem, EsperaRepoMem, repositorios_demo
 from turnos.api.controller import registrar_rutas
 
@@ -23,6 +23,13 @@ def create_app(servicio: CrearTurnoService | None = None, agenda: AgendaService 
 
     @app.exception_handler(TurnoSolapado)
     async def solapado(_request: Request, exc: TurnoSolapado) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": {"codigo": exc.codigo, "mensaje": exc.mensaje}},
+        )
+
+    @app.exception_handler(TransicionInvalida)
+    async def transicion(_request: Request, exc: TransicionInvalida) -> JSONResponse:
         return JSONResponse(
             status_code=409,
             content={"detail": {"codigo": exc.codigo, "mensaje": exc.mensaje}},

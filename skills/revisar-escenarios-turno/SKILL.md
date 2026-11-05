@@ -1,6 +1,6 @@
 ---
 name: revisar-escenarios-turno
-description: Revisa una spec de turnos odontológicos antes de implementarla. Usar cuando se escribe o se corrige una spec de agenda, reserva, enlace, espera o reprogramación.
+description: Revisa una spec de turnos odontológicos antes de implementarla. Usar cuando se escribe o se corrige una spec de agenda, reserva, enlace, espera, confirmación, cancelación o reprogramación, aunque no se nombre la palabra spec.
 ---
 
 # Revisar escenarios de turno
