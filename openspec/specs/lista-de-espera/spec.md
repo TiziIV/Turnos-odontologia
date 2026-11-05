@@ -2,25 +2,25 @@
 
 ## Purpose
 
-Anotar una espera no crea un turno. Asignar toma la primera que pasa la regla de solapamiento.
+Anotar una espera no crea un turno. Al asignar, entra solo la primera espera que pasa la regla de solapamiento. Las demás siguen en la lista.
 
 ## Requirements
 
-### Requirement: lista-de-espera
+### Requirement: Asignar la primera espera compatible
 
-El sistema SHALL anotar esperas sin crear turnos y MUST asignar solo la primera espera compatible.
+El sistema SHALL anotar esperas sin crear turnos y MUST crear un turno solo para la primera espera cuyo hueco esté libre.
 
-#### Scenario: Camino feliz
-- **GIVEN** el catalogo sintetico del README
-- **WHEN** se usa la operacion principal de este change
-- **THEN** el resultado observable coincide con la spec y queda cubierto por tests/api/test_tpi.py
+#### Scenario: Anotar no ocupa la agenda
+- **GIVEN** ya hay un turno a las 9:00
+- **WHEN** se anota una espera a las 9:15 con el mismo profesional
+- **THEN** la respuesta dice que no se creó un turno y la agenda sigue con un solo turno
 
-#### Scenario: Rechazo de negocio
-- **GIVEN** un turno activo que ocupa el recurso
-- **WHEN** la operacion viola la regla de solapamiento o de estado
-- **THEN** no se crea un turno indebido y el anterior permanece
+#### Scenario: La primera que entra
+- **GIVEN** esa espera que se pisa y otra espera a la misma hora con profesional 2 y sillón 2 libres
+- **WHEN** se asigna
+- **THEN** se crea el turno del profesional 2 y la espera que se pisaba sigue en la lista
 
-#### Scenario: Borde
-- **GIVEN** un caso limite del change (enlace ya usado, paciente inexistente, espera que no entra)
-- **WHEN** se intenta la operacion
-- **THEN** el sistema rechaza sin alterar los turnos validos
+#### Scenario: Ninguna entra
+- **GIVEN** todas las esperas chocan con turnos activos
+- **WHEN** se asigna
+- **THEN** se devuelve 409 y la lista no pierde esas esperas

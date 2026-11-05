@@ -10,7 +10,7 @@ Preparar `lista-de-espera` con la skill `revisar-escenarios-turno` y consultar c
 
 La skill obliga tres escenarios y el borde del intervalo. Con eso la spec de la espera distingue anotar (no crea turno), asignar la primera que no choca, y dejar en la lista a la que sí choca. Esos tres casos están en `tests/api/test_tpi.py`.
 
-Context7 se eligió para no inventar la forma de publicar una página. La configuración sin secretos está en `docs/skills-mcp/mcp.example.json`. En esta sesión de implementación el catálogo de herramientas del agente no expuso Context7, así que no se pegó una respuesta suya como si hubiera ocurrido. El panel usa `HTMLResponse` de FastAPI, que es la vía documentada para devolver HTML, y el test `test_panel_muestra_las_tres_paginas` comprueba Agenda, Reserva y Espera.
+Context7 se eligió para no inventar la forma de publicar una página. La configuración sin secretos está en `docs/skills-mcp/mcp.example.json`. El 5 de noviembre de 2026 se llamó a la herramienta `resolve-library-id` con la biblioteca FastAPI y después a `query-docs` con el id `/websites/fastapi_tiangolo`. La documentación oficial dice que una ruta puede devolver HTML con `HTMLResponse` y `response_class=HTMLResponse` (https://fastapi.tiangolo.com/advanced/custom-response/). El panel usa esa forma. El test `test_panel_muestra_las_tres_paginas` comprueba Agenda, Reserva y Espera.
 
 ## Antes y después
 

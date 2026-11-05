@@ -82,6 +82,11 @@ def test_espera_no_crea_turno_y_asigna_la_primera_que_entra():
     assert asignada.json()["profesionalId"] == 2
     restantes = http.get("/api/espera").json()
     assert [item["id"] for item in restantes] == [primera.json()["id"]]
+    otra = cliente()
+    otra.post("/api/public/turnos", json=reserva())
+    otra.post("/api/espera", json=reserva(pacienteId=2, inicio="2026-11-02T09:10:00-03:00"))
+    assert otra.post("/api/espera/asignar").status_code == 409
+    assert len(otra.get("/api/espera").json()) == 1
 
 
 def test_panel_muestra_las_tres_paginas():

@@ -2,25 +2,25 @@
 
 ## Purpose
 
-Un enlace nombra un hueco. Si el alta entra, el enlace queda usado. Si se rechaza, sigue disponible.
+Un enlace nombra un hueco. Si el alta entra, el turno queda y el enlace queda usado. Si el alta se rechaza, el enlace sigue disponible.
 
 ## Requirements
 
-### Requirement: reserva-por-enlace
+### Requirement: Usar un enlace una sola vez
 
-El sistema SHALL crear un turno solo cuando el enlace existe, no fue usado y el hueco no se solapa.
+El sistema SHALL crear el turno al usar un enlace libre y MUST rechazar un enlace inexistente o ya usado sin crear otro turno.
 
-#### Scenario: Camino feliz
-- **GIVEN** el catalogo sintetico del README
-- **WHEN** se usa la operacion principal de este change
-- **THEN** el resultado observable coincide con la spec y queda cubierto por tests/api/test_tpi.py
+#### Scenario: Enlace libre
+- **GIVEN** un enlace para profesional 2 y sillón 2, con ambos libres
+- **WHEN** se usa ese enlace
+- **THEN** se devuelve 201 y un segundo uso del mismo token devuelve 422
 
-#### Scenario: Rechazo de negocio
-- **GIVEN** un turno activo que ocupa el recurso
-- **WHEN** la operacion viola la regla de solapamiento o de estado
-- **THEN** no se crea un turno indebido y el anterior permanece
+#### Scenario: El hueco está ocupado
+- **GIVEN** ya hay un turno de limpieza a las 9:00 con profesional 1 y un enlace a las 9:15 con ese mismo profesional
+- **WHEN** se usa el enlace
+- **THEN** se devuelve 409 y el enlace sigue sin usar
 
-#### Scenario: Borde
-- **GIVEN** un caso limite del change (enlace ya usado, paciente inexistente, espera que no entra)
-- **WHEN** se intenta la operacion
-- **THEN** el sistema rechaza sin alterar los turnos validos
+#### Scenario: Token que no existe
+- **GIVEN** no hay un enlace `no-existe`
+- **WHEN** se intenta usarlo
+- **THEN** se devuelve 422 y no se crea un turno
