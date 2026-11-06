@@ -3,144 +3,329 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Demostración del consultorio: agenda, reserva y lista de espera con datos ficticios.">
   <title>Turnos del consultorio</title>
   <style>
-    body { font-family: Georgia, serif; margin: 1.5rem; color: #142; background: #f7f6f2; }
-    nav button, form button { margin-right: .4rem; }
-    section { display: none; max-width: 40rem; }
-    section.activa { display: block; }
-    label { display: block; margin: .4rem 0; }
-    .aviso { min-height: 1.4rem; font-weight: bold; }
-    table { border-collapse: collapse; margin: 1rem 0 1.5rem; background: #fff; }
-    th, td { border: 1px solid #c9c4b8; padding: .35rem .6rem; text-align: left; }
-    th { background: #efece4; }
-    .no { color: #8a2b2b; }
-    #lista, #lista-espera { padding: 0; }
-    #lista li, #lista-espera li { list-style: none; background: #fff; border: 1px solid #c9c4b8; padding: .7rem .9rem; margin: .7rem 0; }
-    #lista p, #lista-espera p { margin: .15rem 0; }
+    @layer reset, tokens, base, layout, components;
+
+    @layer reset {
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; }
+      button, input, select { font: inherit; }
+      ul { margin: 0; padding: 0; }
+      h1, h2, h3, p { text-wrap: pretty; }
+      h1, h2, h3 { text-wrap: balance; }
+    }
+
+    @layer tokens {
+      :root {
+        --ink: oklch(0.24 0.02 175);
+        --muted: oklch(0.45 0.02 175);
+        --paper: oklch(0.96 0.014 95);
+        --sheet: oklch(0.995 0.004 95);
+        --line: oklch(0.86 0.018 95);
+        --stamp: oklch(0.4 0.07 178);
+        --stamp-ink: oklch(0.98 0.01 95);
+        --danger: oklch(0.46 0.13 25);
+        --ok: oklch(0.4 0.08 155);
+        --sans: "Segoe UI", "Helvetica Neue", sans-serif;
+        --serif: Palatino, "Palatino Linotype", "Iowan Old Style", Georgia, serif;
+        --step-0: 1rem;
+        --step-1: 1.25rem;
+        --step-2: clamp(1.7rem, 1.4rem + 1vw, 2.15rem);
+      }
+    }
+
+    @layer base {
+      body {
+        font-family: var(--sans);
+        font-size: var(--step-0);
+        line-height: 1.5;
+        color: var(--ink);
+        background: var(--paper);
+      }
+      h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.2; }
+      h1 { font-size: var(--step-2); margin: 0; }
+      h2 { font-size: var(--step-1); margin: 0 0 0.35rem; }
+      h3 { font-size: 1.05rem; margin: 0; }
+      p { margin: 0.35rem 0; max-inline-size: 68ch; }
+      a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+        outline: 2px solid var(--stamp);
+        outline-offset: 2px;
+      }
+    }
+
+    @layer layout {
+      .saltar {
+        position: absolute;
+        left: 0.5rem;
+        top: 0.5rem;
+        transform: translateY(-150%);
+        background: var(--sheet);
+        padding: 0.4rem 0.7rem;
+      }
+      .saltar:focus { transform: none; }
+      .encabezado, .marco { padding-inline: clamp(1rem, 3vw, 2.5rem); }
+      .encabezado { padding-block: 1.25rem 0.5rem; }
+      .marco {
+        display: grid;
+        grid-template-columns: minmax(22rem, 34rem) minmax(0, 42rem);
+        gap: 1.5rem 2rem;
+        align-items: start;
+        padding-block: 0.5rem 3rem;
+      }
+      @media (width < 52rem) {
+        .marco { grid-template-columns: minmax(0, 1fr); }
+      }
+    }
+
+    @layer components {
+      .bajada { color: var(--muted); }
+      .pestanas {
+        display: flex;
+        gap: 0.35rem;
+        margin-top: 1rem;
+        border-bottom: 1px solid var(--line);
+      }
+      .pestanas button {
+        min-block-size: 2.75rem;
+        padding: 0.4rem 0.9rem;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        background: transparent;
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .pestanas button[aria-selected="true"] {
+        border-bottom-color: var(--stamp);
+        font-weight: 650;
+      }
+      .aviso {
+        min-block-size: 1.4rem;
+        margin: 0.8rem 0;
+        padding: 0.55rem 0.75rem;
+        background: var(--sheet);
+        border-inline-start: 4px solid var(--stamp);
+      }
+      .aviso:empty { display: none; }
+      .aviso.error { border-inline-start-color: var(--danger); }
+      table { border-collapse: collapse; inline-size: 100%; background: var(--sheet); }
+      caption { text-align: left; font-family: var(--serif); font-size: var(--step-1); margin-bottom: 0.45rem; }
+      th, td { border-bottom: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; vertical-align: baseline; }
+      th:last-child, td:last-child { white-space: nowrap; }
+      @media (width < 52rem) {
+        th:last-child, td:last-child { white-space: normal; }
+      }
+      th { font-weight: 650; }
+      .no { color: var(--danger); }
+      .ayuda { color: var(--muted); }
+      form { display: grid; gap: 0.85rem; }
+      fieldset {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+        gap: 0.7rem 1rem;
+      }
+      legend { font-family: var(--serif); padding: 0; margin-bottom: 0.2rem; }
+      label { display: grid; gap: 0.25rem; }
+      input, select {
+        inline-size: 100%;
+        min-block-size: 2.75rem;
+        padding: 0.4rem 0.55rem;
+        border: 1px solid var(--line);
+        background: var(--sheet);
+        color: var(--ink);
+      }
+      .acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+      button.principal, button.secundario, #lista button, #lista-espera button {
+        min-block-size: 2.75rem;
+        padding: 0.4rem 0.9rem;
+        cursor: pointer;
+      }
+      button.principal { background: var(--stamp); color: var(--stamp-ink); border: 1px solid var(--stamp); }
+      button.secundario, #lista button { background: var(--sheet); color: var(--ink); border: 1px solid var(--line); }
+      #lista li, #lista-espera li {
+        list-style: none;
+        padding: 0.85rem 0;
+        border-bottom: 1px solid var(--line);
+      }
+      #lista dl, #lista-espera dl {
+        display: grid;
+        grid-template-columns: 8.5rem 1fr;
+        gap: 0.15rem 0.6rem;
+        margin: 0.45rem 0 0.6rem;
+      }
+      dt { color: var(--muted); }
+      dd { margin: 0; }
+    }
   </style>
 </head>
 <body>
-  <h1>Consultorio de demostración</h1>
-  <p>Datos ficticios. En los formularios se elige un número de esta lista. Otro número, como el paciente 5, no existe y la reserva se rechaza.</p>
-  <table>
-    <caption>Qué número se puede usar</caption>
-    <thead>
-      <tr><th scope="col">Qué es</th><th scope="col">Número</th><th scope="col">Nombre</th><th scope="col">¿Se puede usar?</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Paciente</td><td>1</td><td>Carla Pérez</td><td>Sí</td></tr>
-      <tr><td>Paciente</td><td>2</td><td>Diego Ruiz</td><td>Sí</td></tr>
-      <tr><td>Profesional</td><td>1</td><td>Ana Gómez, odontología general</td><td>Sí</td></tr>
-      <tr><td>Profesional</td><td>2</td><td>Bruno Díaz, endodoncia</td><td>Sí</td></tr>
-      <tr><td>Profesional</td><td>3</td><td>Eva Sosa, ortodoncia</td><td class="no">No. Está inactiva</td></tr>
-      <tr><td>Sillón</td><td>1</td><td>BOX-1</td><td>Sí</td></tr>
-      <tr><td>Sillón</td><td>2</td><td>BOX-2</td><td>Sí</td></tr>
-      <tr><td>Sillón</td><td>3</td><td>BOX-X</td><td class="no">No. Está fuera de servicio</td></tr>
-      <tr><td>Prestación</td><td>1</td><td>Limpieza, 30 minutos</td><td>Sí</td></tr>
-      <tr><td>Prestación</td><td>2</td><td>Consulta, 20 minutos</td><td>Sí</td></tr>
-      <tr><td>Prestación</td><td>3</td><td>Extracción, 40 minutos</td><td>Sí</td></tr>
-      <tr><td>Prestación</td><td>4</td><td>Endodoncia, 60 minutos</td><td>Sí</td></tr>
-      <tr><td>Prestación</td><td>5</td><td>Prestación retirada</td><td class="no">No. Está inactiva</td></tr>
-    </tbody>
-  </table>
-  <nav>
-    <button type="button" data-pagina="agenda">Agenda</button>
-    <button type="button" data-pagina="reserva">Reserva</button>
-    <button type="button" data-pagina="espera">Espera</button>
-  </nav>
-  <p class="aviso" id="aviso"></p>
+  <a class="saltar" href="#trabajo">Saltar al contenido</a>
+  <header class="encabezado">
+    <h1>Consultorio de demostración</h1>
+    <p class="bajada">Datos ficticios. En los formularios se elige un número de esta lista. Otro número, como el paciente 5, no existe y la reserva se rechaza.</p>
+    <nav class="pestanas" aria-label="Secciones del consultorio">
+      <button type="button" data-pagina="agenda" aria-selected="true">Agenda</button>
+      <button type="button" data-pagina="reserva" aria-selected="false">Reserva</button>
+      <button type="button" data-pagina="espera" aria-selected="false">Espera</button>
+    </nav>
+  </header>
 
-  <section id="agenda" class="activa">
-    <h2>Agenda</h2>
-    <button type="button" id="refrescar">Actualizar</button>
-    <ul id="lista"></ul>
-  </section>
+  <div class="marco">
+    <table>
+      <caption>Qué número se puede usar</caption>
+      <thead>
+        <tr><th scope="col">Qué es</th><th scope="col">Número</th><th scope="col">Nombre</th><th scope="col">¿Se puede usar?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Paciente</td><td>1</td><td>Carla Pérez</td><td>Sí</td></tr>
+        <tr><td>Paciente</td><td>2</td><td>Diego Ruiz</td><td>Sí</td></tr>
+        <tr><td>Profesional</td><td>1</td><td>Ana Gómez, odontología general</td><td>Sí</td></tr>
+        <tr><td>Profesional</td><td>2</td><td>Bruno Díaz, endodoncia</td><td>Sí</td></tr>
+        <tr><td>Profesional</td><td>3</td><td>Eva Sosa, ortodoncia</td><td class="no">No. Está inactiva</td></tr>
+        <tr><td>Sillón</td><td>1</td><td>BOX-1</td><td>Sí</td></tr>
+        <tr><td>Sillón</td><td>2</td><td>BOX-2</td><td>Sí</td></tr>
+        <tr><td>Sillón</td><td>3</td><td>BOX-X</td><td class="no">No. Está fuera de servicio</td></tr>
+        <tr><td>Prestación</td><td>1</td><td>Limpieza, 30 minutos</td><td>Sí</td></tr>
+        <tr><td>Prestación</td><td>2</td><td>Consulta, 20 minutos</td><td>Sí</td></tr>
+        <tr><td>Prestación</td><td>3</td><td>Extracción, 40 minutos</td><td>Sí</td></tr>
+        <tr><td>Prestación</td><td>4</td><td>Endodoncia, 60 minutos</td><td>Sí</td></tr>
+        <tr><td>Prestación</td><td>5</td><td>Prestación retirada</td><td class="no">No. Está inactiva</td></tr>
+      </tbody>
+    </table>
 
-  <section id="reserva">
-    <h2>Reserva</h2>
-    <form id="form-reserva">
-      <label>Paciente
-        <select name="pacienteId" required>
-          <option value="1" selected>1 — Carla Pérez</option>
-          <option value="2">2 — Diego Ruiz</option>
-        </select>
-      </label>
-      <label>Profesional
-        <select name="profesionalId" required>
-          <option value="1" selected>1 — Ana Gómez (se puede usar)</option>
-          <option value="2">2 — Bruno Díaz (se puede usar)</option>
-          <option value="3">3 — Eva Sosa (inactiva, se rechaza)</option>
-        </select>
-      </label>
-      <label>Sillón
-        <select name="sillonId" required>
-          <option value="1" selected>1 — BOX-1 (se puede usar)</option>
-          <option value="2">2 — BOX-2 (se puede usar)</option>
-          <option value="3">3 — BOX-X (fuera de servicio, se rechaza)</option>
-        </select>
-      </label>
-      <label>Prestación
-        <select name="prestacionId" required>
-          <option value="1" selected>1 — Limpieza, 30 minutos</option>
-          <option value="2">2 — Consulta, 20 minutos</option>
-          <option value="3">3 — Extracción, 40 minutos</option>
-          <option value="4">4 — Endodoncia, 60 minutos</option>
-          <option value="5">5 — Retirada (inactiva, se rechaza)</option>
-        </select>
-      </label>
-      <label>Día <input name="dia" type="date" value="2026-11-02" required></label>
-      <label>Hora <input name="hora" type="time" value="09:00" step="60" required></label>
-      <p>Elegí el día en el calendario y la hora de Argentina. Con limpieza, si empieza a las 09:00 termina a las 09:30. Otro turno puede empezar justo a las 09:30.</p>
-      <button type="submit">Pedir turno</button>
-    </form>
-  </section>
+    <main id="trabajo">
+      <p class="aviso" id="aviso" role="status"></p>
 
-  <section id="espera">
-    <h2>Espera</h2>
-    <form id="form-espera">
-      <label>Paciente
-        <select name="pacienteId" required>
-          <option value="1">1 — Carla Pérez</option>
-          <option value="2" selected>2 — Diego Ruiz</option>
-        </select>
-      </label>
-      <label>Profesional
-        <select name="profesionalId" required>
-          <option value="1" selected>1 — Ana Gómez (se puede usar)</option>
-          <option value="2">2 — Bruno Díaz (se puede usar)</option>
-          <option value="3">3 — Eva Sosa (inactiva, se rechaza)</option>
-        </select>
-      </label>
-      <label>Sillón
-        <select name="sillonId" required>
-          <option value="1" selected>1 — BOX-1 (se puede usar)</option>
-          <option value="2">2 — BOX-2 (se puede usar)</option>
-          <option value="3">3 — BOX-X (fuera de servicio, se rechaza)</option>
-        </select>
-      </label>
-      <label>Prestación
-        <select name="prestacionId" required>
-          <option value="1" selected>1 — Limpieza, 30 minutos</option>
-          <option value="2">2 — Consulta, 20 minutos</option>
-          <option value="3">3 — Extracción, 40 minutos</option>
-          <option value="4">4 — Endodoncia, 60 minutos</option>
-          <option value="5">5 — Retirada (inactiva, se rechaza)</option>
-        </select>
-      </label>
-      <label>Día <input name="dia" type="date" value="2026-11-02" required></label>
-      <label>Hora <input name="hora" type="time" value="09:00" step="60" required></label>
-      <button type="submit">Anotar espera</button>
-    </form>
-    <button type="button" id="asignar">Asignar la primera que entre</button>
-    <ul id="lista-espera"></ul>
-  </section>
+      <section id="agenda">
+        <h2>Agenda</h2>
+        <p class="ayuda">Cada turno ocupa a la vez un profesional y un sillón. El horario se muestra en hora Argentina.</p>
+        <div class="acciones">
+          <button type="button" class="secundario" id="refrescar">Actualizar</button>
+        </div>
+        <ul id="lista"></ul>
+      </section>
+
+      <section id="reserva" hidden>
+        <h2>Reserva</h2>
+        <p class="ayuda">Elegí el día en el calendario y la hora de Argentina. Con limpieza, si empieza a las 09:00 termina a las 09:30. Otro turno puede empezar justo a las 09:30.</p>
+        <form id="form-reserva">
+          <fieldset>
+            <legend>Quién atiende</legend>
+            <label>Paciente
+              <select name="pacienteId" required>
+                <option value="1" selected>1 — Carla Pérez</option>
+                <option value="2">2 — Diego Ruiz</option>
+              </select>
+            </label>
+            <label>Profesional
+              <select name="profesionalId" required>
+                <option value="1" selected>1 — Ana Gómez (se puede usar)</option>
+                <option value="2">2 — Bruno Díaz (se puede usar)</option>
+                <option value="3">3 — Eva Sosa (inactiva, se rechaza)</option>
+              </select>
+            </label>
+          </fieldset>
+          <fieldset>
+            <legend>Dónde y qué prestación</legend>
+            <label>Sillón
+              <select name="sillonId" required>
+                <option value="1" selected>1 — BOX-1 (se puede usar)</option>
+                <option value="2">2 — BOX-2 (se puede usar)</option>
+                <option value="3">3 — BOX-X (fuera de servicio, se rechaza)</option>
+              </select>
+            </label>
+            <label>Prestación
+              <select name="prestacionId" required>
+                <option value="1" selected>1 — Limpieza, 30 minutos</option>
+                <option value="2">2 — Consulta, 20 minutos</option>
+                <option value="3">3 — Extracción, 40 minutos</option>
+                <option value="4">4 — Endodoncia, 60 minutos</option>
+                <option value="5">5 — Retirada (inactiva, se rechaza)</option>
+              </select>
+            </label>
+          </fieldset>
+          <fieldset>
+            <legend>Cuándo</legend>
+            <label>Día <input name="dia" type="date" value="2026-11-02" required></label>
+            <label>Hora <input name="hora" type="time" value="09:00" step="60" required></label>
+          </fieldset>
+          <div class="acciones">
+            <button class="principal" type="submit">Pedir turno</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="espera" hidden>
+        <h2>Espera</h2>
+        <p class="ayuda">Anotar no crea un turno: deja el pedido en la lista. Asignar toma la primera espera que no choca con un turno ya ocupado.</p>
+        <form id="form-espera">
+          <fieldset>
+            <legend>Quién espera</legend>
+            <label>Paciente
+              <select name="pacienteId" required>
+                <option value="1">1 — Carla Pérez</option>
+                <option value="2" selected>2 — Diego Ruiz</option>
+              </select>
+            </label>
+            <label>Profesional
+              <select name="profesionalId" required>
+                <option value="1" selected>1 — Ana Gómez (se puede usar)</option>
+                <option value="2">2 — Bruno Díaz (se puede usar)</option>
+                <option value="3">3 — Eva Sosa (inactiva, se rechaza)</option>
+              </select>
+            </label>
+          </fieldset>
+          <fieldset>
+            <legend>Dónde y qué prestación</legend>
+            <label>Sillón
+              <select name="sillonId" required>
+                <option value="1" selected>1 — BOX-1 (se puede usar)</option>
+                <option value="2">2 — BOX-2 (se puede usar)</option>
+                <option value="3">3 — BOX-X (fuera de servicio, se rechaza)</option>
+              </select>
+            </label>
+            <label>Prestación
+              <select name="prestacionId" required>
+                <option value="1" selected>1 — Limpieza, 30 minutos</option>
+                <option value="2">2 — Consulta, 20 minutos</option>
+                <option value="3">3 — Extracción, 40 minutos</option>
+                <option value="4">4 — Endodoncia, 60 minutos</option>
+                <option value="5">5 — Retirada (inactiva, se rechaza)</option>
+              </select>
+            </label>
+          </fieldset>
+          <fieldset>
+            <legend>Cuándo</legend>
+            <label>Día <input name="dia" type="date" value="2026-11-02" required></label>
+            <label>Hora <input name="hora" type="time" value="09:00" step="60" required></label>
+          </fieldset>
+          <div class="acciones">
+            <button class="principal" type="submit">Anotar espera</button>
+            <button type="button" class="secundario" id="asignar">Asignar la primera que entre</button>
+          </div>
+        </form>
+        <ul id="lista-espera"></ul>
+      </section>
+    </main>
+  </div>
 
   <script>
     const aviso = document.querySelector("#aviso");
+    function publicar(texto, esError) {
+      aviso.textContent = texto;
+      aviso.classList.toggle("error", Boolean(esError));
+    }
     function mostrar(id) {
-      document.querySelectorAll("section").forEach((seccion) => seccion.classList.remove("activa"));
-      document.querySelector("#" + id).classList.add("activa");
+      document.querySelectorAll("nav button").forEach((boton) => {
+        boton.setAttribute("aria-selected", String(boton.dataset.pagina === id));
+      });
+      document.querySelectorAll("main section").forEach((seccion) => {
+        seccion.hidden = seccion.id !== id;
+      });
     }
     document.querySelectorAll("nav button").forEach((boton) => {
       boton.addEventListener("click", () => mostrar(boton.dataset.pagina));
@@ -206,49 +391,54 @@
       const hora = datos.hora.length === 5 ? datos.hora + ":00" : datos.hora;
       return datos.dia + "T" + hora + "-03:00";
     }
-    function linea(texto) {
-      const parrafo = document.createElement("p");
-      parrafo.textContent = texto;
-      return parrafo;
+    function ficha(lista, titulo, filas) {
+      const item = document.createElement("li");
+      const encabezado = document.createElement("h3");
+      encabezado.textContent = titulo;
+      const datos = document.createElement("dl");
+      filas.forEach((fila) => {
+        const termino = document.createElement("dt");
+        termino.textContent = fila[0];
+        const valor = document.createElement("dd");
+        valor.textContent = fila[1];
+        datos.append(termino, valor);
+      });
+      item.append(encabezado, datos);
+      lista.append(item);
+      return item;
     }
     async function cargarAgenda() {
       const turnos = await leer("/api/turnos");
       const lista = document.querySelector("#lista");
       lista.innerHTML = "";
       if (turnos.length === 0) {
-        const vacia = document.createElement("li");
-        vacia.append(linea("Todavía no hay turnos."));
-        lista.append(vacia);
+        ficha(lista, "Sin turnos", [["Estado", "Todavía no hay turnos. Pedí uno en Reserva."]]);
         return;
       }
       turnos.forEach((turno) => {
-        const item = document.createElement("li");
-        item.append(
-          linea("Turno " + turno.id + " · " + nombre(catalogo.estados, turno.estado)),
-          linea("Paciente: " + nombre(catalogo.pacientes, turno.pacienteId)),
-          linea("Profesional: " + nombre(catalogo.profesionales, turno.profesionalId)),
-          linea("Sillón: " + nombre(catalogo.sillones, turno.sillonId)),
-          linea("Prestación: " + nombre(catalogo.prestaciones, turno.prestacionId)),
-          linea(fechaArgentina(turno.inicio) + ", de " + horaArgentina(turno.inicio) + " a " + horaArgentina(turno.fin) + " (hora Argentina)")
-        );
+        const item = ficha(lista, "Turno " + turno.id + " · " + nombre(catalogo.estados, turno.estado), [
+          ["Paciente", nombre(catalogo.pacientes, turno.pacienteId)],
+          ["Profesional", nombre(catalogo.profesionales, turno.profesionalId)],
+          ["Sillón", nombre(catalogo.sillones, turno.sillonId)],
+          ["Prestación", nombre(catalogo.prestaciones, turno.prestacionId)],
+          ["Horario", fechaArgentina(turno.inicio) + ", de " + horaArgentina(turno.inicio) + " a " + horaArgentina(turno.fin) + " (hora Argentina)"]
+        ]);
         const cancelar = document.createElement("button");
         cancelar.type = "button";
         cancelar.textContent = "Cancelar";
         cancelar.addEventListener("click", async () => {
           try {
             await leer("/api/turnos/" + turno.id + "/cancelar", { method: "POST" });
-            aviso.textContent = "Turno cancelado. El horario quedó libre.";
+            publicar("Turno cancelado. El horario quedó libre.", false);
             cargarAgenda();
           } catch (error) {
-            aviso.textContent = error.message;
+            publicar(error.message, true);
           }
         });
-        item.append(" ");
         item.append(cancelar);
-        lista.append(item);
       });
     }
-    document.querySelector("#refrescar").addEventListener("click", () => cargarAgenda().catch((e) => aviso.textContent = e.message));
+    document.querySelector("#refrescar").addEventListener("click", () => cargarAgenda().catch((e) => publicar(e.message, true)));
     document.querySelector("#form-reserva").addEventListener("submit", async (evento) => {
       evento.preventDefault();
       const datos = Object.fromEntries(new FormData(evento.target));
@@ -264,27 +454,29 @@
             inicio: inicioArgentina(datos)
           })
         });
-        aviso.textContent = "Turno " + turno.id + " creado. Mirá el detalle en Agenda.";
-        cargarAgenda();
+        publicar("Turno " + turno.id + " creado. Mirá el detalle en Agenda.", false);
+        await cargarAgenda();
+        mostrar("agenda");
       } catch (error) {
-        aviso.textContent = error.message;
+        publicar(error.message, true);
       }
     });
     async function cargarEspera() {
       const esperas = await leer("/api/espera");
       const lista = document.querySelector("#lista-espera");
       lista.innerHTML = "";
+      if (esperas.length === 0) {
+        ficha(lista, "Lista vacía", [["Estado", "Nadie está esperando."]]);
+        return;
+      }
       esperas.forEach((espera) => {
-        const item = document.createElement("li");
-        item.append(
-          linea("Espera " + espera.id),
-          linea("Paciente: " + nombre(catalogo.pacientes, espera.pacienteId)),
-          linea("Profesional: " + nombre(catalogo.profesionales, espera.profesionalId)),
-          linea("Sillón: " + nombre(catalogo.sillones, espera.sillonId)),
-          linea("Prestación: " + nombre(catalogo.prestaciones, espera.prestacionId)),
-          linea(fechaArgentina(espera.inicio) + ", " + horaArgentina(espera.inicio) + " (hora Argentina). Todavía no es un turno.")
-        );
-        lista.append(item);
+        ficha(lista, "Espera " + espera.id, [
+          ["Paciente", nombre(catalogo.pacientes, espera.pacienteId)],
+          ["Profesional", nombre(catalogo.profesionales, espera.profesionalId)],
+          ["Sillón", nombre(catalogo.sillones, espera.sillonId)],
+          ["Prestación", nombre(catalogo.prestaciones, espera.prestacionId)],
+          ["Horario", fechaArgentina(espera.inicio) + ", " + horaArgentina(espera.inicio) + " (hora Argentina). Todavía no es un turno."]
+        ]);
       });
     }
     document.querySelector("#form-espera").addEventListener("submit", async (evento) => {
@@ -302,22 +494,25 @@
             inicio: inicioArgentina(datos)
           })
         });
-        aviso.textContent = "Anotado en espera. Todavía no hay turno.";
+        publicar("Anotado en espera. Todavía no hay turno.", false);
         cargarEspera();
       } catch (error) {
-        aviso.textContent = error.message;
+        publicar(error.message, true);
       }
     });
     document.querySelector("#asignar").addEventListener("click", async () => {
       try {
         const turno = await leer("/api/espera/asignar", { method: "POST" });
-        aviso.textContent = "Se asignó el turno " + turno.id + ".";
-        cargarEspera();
+        publicar("Se asignó el turno " + turno.id + ".", false);
+        await cargarEspera();
+        await cargarAgenda();
+        mostrar("agenda");
       } catch (error) {
-        aviso.textContent = error.message;
+        publicar(error.message, true);
       }
     });
     cargarAgenda().catch(() => {});
+    cargarEspera().catch(() => {});
   </script>
 </body>
 </html>
