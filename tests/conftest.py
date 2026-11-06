@@ -5,7 +5,7 @@ import pytest
 from turnos.application.service.crear_turno import CrearTurnoService
 from turnos.domain.model.entidades import Prestacion, Turno
 from turnos.domain.model.enums import CanalTurno, EstadoTurno
-from turnos.infrastructure.memoria import repositorios_demo
+from turnos.infrastructure.persistence.memoria import repositorios_demo
 
 OFFSET_AR = timezone(timedelta(hours=-3))
 

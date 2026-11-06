@@ -8,7 +8,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 OBJETIVOS = [
-    RAIZ / "src" / "turnos" / "infrastructure" / "catalogos.py",
+    RAIZ / "src" / "turnos" / "infrastructure" / "persistence" / "catalogos.py",
     RAIZ / "tests",
 ]
 

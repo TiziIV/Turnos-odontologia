@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from turnos.api.app import create_app
 from turnos.application.service.crear_turno import CrearTurnoService
 from turnos.domain.model.enums import EstadoTurno
-from turnos.infrastructure.memoria import repositorios_demo
+from turnos.infrastructure.persistence.memoria import repositorios_demo
 from tests.conftest import turno_activo
 
 

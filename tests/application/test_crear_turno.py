@@ -12,7 +12,7 @@ from turnos.domain.exception.errores import (
     TurnoSolapado,
 )
 from turnos.domain.model.enums import CanalTurno, EstadoTurno
-from turnos.infrastructure.memoria import PrestacionRepoMem
+from turnos.infrastructure.persistence.memoria import PrestacionRepoMem
 from tests.conftest import instante_local, prestacion_invalida, turno_activo
 
 

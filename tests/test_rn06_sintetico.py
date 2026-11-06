@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from turnos.infrastructure.catalogos import catalogos_sinteticos
+from turnos.infrastructure.persistence.catalogos import catalogos_sinteticos
 
 
 def test_rn06_emails_y_documentos_sinteticos():
@@ -12,6 +12,6 @@ def test_rn06_emails_y_documentos_sinteticos():
 
 
 def test_rn06_sin_datos_clinicos_en_catalogo():
-    texto = Path("src/turnos/infrastructure/catalogos.py").read_text(encoding="utf-8").lower()
+    texto = Path("src/turnos/infrastructure/persistence/catalogos.py").read_text(encoding="utf-8").lower()
     for prohibido in ("diagnostico", "radiografia", "historia clinica", "dni real"):
         assert prohibido not in texto

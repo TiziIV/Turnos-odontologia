@@ -7,7 +7,7 @@ from turnos.api.dto import CrearTurnoRequest, TurnoResponse
 from turnos.application.dto import CrearTurnoComando
 from turnos.domain.exception.errores import ReferenciaInexistente
 
-PANEL = Path(__file__).with_name("panel.html")
+PANEL = Path(__file__).resolve().parents[1] / "panel" / "panel.html"
 
 
 def _respuesta(turno) -> TurnoResponse:

@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from turnos.application.service.agenda import AgendaService
 from turnos.application.service.crear_turno import CrearTurnoService
 from turnos.domain.exception.errores import ErrorDeDominio, TransicionInvalida, TurnoSolapado
-from turnos.infrastructure.memoria import EnlaceRepoMem, EsperaRepoMem, repositorios_demo
+from turnos.infrastructure.persistence.memoria import EnlaceRepoMem, EsperaRepoMem, repositorios_demo
 from turnos.api.controller import registrar_rutas
 
 

@@ -15,7 +15,7 @@ from turnos.domain.model.enums import EstadoTurno
 from turnos.domain.rule.duracion import calcular_fin
 from turnos.domain.rule.solapamiento import hay_conflicto
 from turnos.domain.rule.tiempo import a_utc
-from turnos.infrastructure.memoria import EnlaceRepoMem, EsperaRepoMem, TurnoRepoMem
+from turnos.infrastructure.persistence.memoria import EnlaceRepoMem, EsperaRepoMem, TurnoRepoMem
 
 
 class AgendaService:

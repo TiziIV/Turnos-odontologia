@@ -25,7 +25,7 @@ La primera lectura de la skill pedía un escenario aparte para cuando chocan pro
 | `AGENTS.md` y `CLAUDE.md` | Cuándo usarla y el límite del MCP |
 | `docs/skills-mcp/mcp.example.json` | Configuración reproducible sin claves |
 | `src/turnos/application/service/agenda.py` | Espera, enlace y estados |
-| `src/turnos/api/panel.html` | Pantalla de lo ya implementado |
+| `src/turnos/api/panel/panel.html` | Pantalla de lo ya implementado |
 | `tests/api/test_tpi.py` | Escenarios de los changes nuevos |
 
 ## Límite

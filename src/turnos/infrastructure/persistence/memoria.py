@@ -9,7 +9,7 @@ from turnos.domain.model.entidades import (
     Sillon,
     Turno,
 )
-from turnos.infrastructure.catalogos import catalogos_sinteticos
+from turnos.infrastructure.persistence.catalogos import catalogos_sinteticos
 
 
 class CatalogoEnMemoria:
