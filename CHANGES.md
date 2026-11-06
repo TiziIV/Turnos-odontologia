@@ -529,7 +529,7 @@ Paso │ Agente A (Núcleo de agenda)      │ Agente B (Agenda auxiliar)       
 
 ## TPI — changes agregados el 2026-11-05
 
-El parcial ya archivó C-06. Estos cinco changes están propuestos, aplicados, verificados y archivados. No completan login, PostgreSQL ni integraciones.
+El parcial ya archivó C-06. Estos seis changes están propuestos, aplicados, verificados y archivados. No completan login, PostgreSQL ni integraciones.
 
 ### [C-20] `ficha-minima-del-turno`
 - **Estado**: `[x]` archivado en `openspec/changes/archive/2026-11-05-ficha-minima-del-turno`
@@ -555,6 +555,11 @@ El parcial ya archivó C-06. Estos cinco changes están propuestos, aplicados, v
 - **Estado**: `[x]` archivado en `openspec/changes/archive/2026-11-05-panel-agenda-reserva-espera`
 - **Alcance**: pantalla en `/panel/` con Agenda, Reserva y Espera, servida por la misma API. Swagger sigue en `/docs`.
 - **Dependencias**: C-20, C-21, C-22, C-23
+
+### [C-25] `panel-legible`
+- **Estado**: `[x]` archivado en `openspec/changes/archive/2026-11-05-panel-legible`
+- **Alcance**: la pantalla explica el catálogo, elige día y hora de Argentina y muestra la agenda en hora local. No cambia el JSON del alta.
+- **Dependencias**: C-24
 
 ## Backlog OUT del MVP (no son changes)
 
@@ -586,6 +591,12 @@ Funcionalidades explícitamente fuera del alcance de la v1 ([`01_vision_y_objeti
 | C-17 | `whatsapp-adapter-y-webhook` | 4 — POSTERIOR | C-07, C-16 | ALTO | RN-05, RN-08 |
 | C-18 | `mercado-pago-sena` | 4 — POSTERIOR | C-14, C-16 | ALTO | RN-06 (RN-LG) |
 | C-19 | `google-calendar-sync` | 4 — POSTERIOR | C-06 | MEDIO | — |
+| C-20 | `ficha-minima-del-turno` | TPI | C-06 | BAJO | RN-06 |
+| C-21 | `reserva-por-enlace` | TPI | C-06 | MEDIO | RN-01, RN-03 |
+| C-22 | `confirmar-cancelar-reprogramar` | TPI | C-06 | MEDIO | RN-04, RN-15 |
+| C-23 | `lista-de-espera` | TPI | C-06 | MEDIO | RN-01, RN-03 |
+| C-24 | `panel-agenda-reserva-espera` | TPI | C-20, C-21, C-22, C-23 | BAJO | — |
+| C-25 | `panel-legible` | TPI | C-24 | BAJO | RN-01, RN-02, RN-03 |
 
 ### Primer change recomendado
 

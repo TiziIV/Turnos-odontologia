@@ -10,12 +10,40 @@
     section { display: none; max-width: 40rem; }
     section.activa { display: block; }
     label { display: block; margin: .4rem 0; }
-    .aviso { min-height: 1.4rem; }
+    .aviso { min-height: 1.4rem; font-weight: bold; }
+    table { border-collapse: collapse; margin: 1rem 0 1.5rem; background: #fff; }
+    th, td { border: 1px solid #c9c4b8; padding: .35rem .6rem; text-align: left; }
+    th { background: #efece4; }
+    .no { color: #8a2b2b; }
+    #lista, #lista-espera { padding: 0; }
+    #lista li, #lista-espera li { list-style: none; background: #fff; border: 1px solid #c9c4b8; padding: .7rem .9rem; margin: .7rem 0; }
+    #lista p, #lista-espera p { margin: .15rem 0; }
   </style>
 </head>
 <body>
   <h1>Consultorio de demostración</h1>
-  <p>Datos ficticios. Identificadores del README: paciente 1 o 2, profesional 1 o 2, sillón 1 o 2, limpieza 1.</p>
+  <p>Datos ficticios. En los formularios se elige un número de esta lista. Otro número, como el paciente 5, no existe y la reserva se rechaza.</p>
+  <table>
+    <caption>Qué número se puede usar</caption>
+    <thead>
+      <tr><th scope="col">Qué es</th><th scope="col">Número</th><th scope="col">Nombre</th><th scope="col">¿Se puede usar?</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Paciente</td><td>1</td><td>Carla Pérez</td><td>Sí</td></tr>
+      <tr><td>Paciente</td><td>2</td><td>Diego Ruiz</td><td>Sí</td></tr>
+      <tr><td>Profesional</td><td>1</td><td>Ana Gómez, odontología general</td><td>Sí</td></tr>
+      <tr><td>Profesional</td><td>2</td><td>Bruno Díaz, endodoncia</td><td>Sí</td></tr>
+      <tr><td>Profesional</td><td>3</td><td>Eva Sosa, ortodoncia</td><td class="no">No. Está inactiva</td></tr>
+      <tr><td>Sillón</td><td>1</td><td>BOX-1</td><td>Sí</td></tr>
+      <tr><td>Sillón</td><td>2</td><td>BOX-2</td><td>Sí</td></tr>
+      <tr><td>Sillón</td><td>3</td><td>BOX-X</td><td class="no">No. Está fuera de servicio</td></tr>
+      <tr><td>Prestación</td><td>1</td><td>Limpieza, 30 minutos</td><td>Sí</td></tr>
+      <tr><td>Prestación</td><td>2</td><td>Consulta, 20 minutos</td><td>Sí</td></tr>
+      <tr><td>Prestación</td><td>3</td><td>Extracción, 40 minutos</td><td>Sí</td></tr>
+      <tr><td>Prestación</td><td>4</td><td>Endodoncia, 60 minutos</td><td>Sí</td></tr>
+      <tr><td>Prestación</td><td>5</td><td>Prestación retirada</td><td class="no">No. Está inactiva</td></tr>
+    </tbody>
+  </table>
   <nav>
     <button type="button" data-pagina="agenda">Agenda</button>
     <button type="button" data-pagina="reserva">Reserva</button>
@@ -32,11 +60,38 @@
   <section id="reserva">
     <h2>Reserva</h2>
     <form id="form-reserva">
-      <label>Paciente <input name="pacienteId" value="1" required></label>
-      <label>Profesional <input name="profesionalId" value="1" required></label>
-      <label>Sillón <input name="sillonId" value="1" required></label>
-      <label>Prestación <input name="prestacionId" value="1" required></label>
-      <label>Inicio <input name="inicio" value="2026-11-02T09:00:00-03:00" required></label>
+      <label>Paciente
+        <select name="pacienteId" required>
+          <option value="1" selected>1 — Carla Pérez</option>
+          <option value="2">2 — Diego Ruiz</option>
+        </select>
+      </label>
+      <label>Profesional
+        <select name="profesionalId" required>
+          <option value="1" selected>1 — Ana Gómez (se puede usar)</option>
+          <option value="2">2 — Bruno Díaz (se puede usar)</option>
+          <option value="3">3 — Eva Sosa (inactiva, se rechaza)</option>
+        </select>
+      </label>
+      <label>Sillón
+        <select name="sillonId" required>
+          <option value="1" selected>1 — BOX-1 (se puede usar)</option>
+          <option value="2">2 — BOX-2 (se puede usar)</option>
+          <option value="3">3 — BOX-X (fuera de servicio, se rechaza)</option>
+        </select>
+      </label>
+      <label>Prestación
+        <select name="prestacionId" required>
+          <option value="1" selected>1 — Limpieza, 30 minutos</option>
+          <option value="2">2 — Consulta, 20 minutos</option>
+          <option value="3">3 — Extracción, 40 minutos</option>
+          <option value="4">4 — Endodoncia, 60 minutos</option>
+          <option value="5">5 — Retirada (inactiva, se rechaza)</option>
+        </select>
+      </label>
+      <label>Día <input name="dia" type="date" value="2026-11-02" required></label>
+      <label>Hora <input name="hora" type="time" value="09:00" step="60" required></label>
+      <p>Elegí el día en el calendario y la hora de Argentina. Con limpieza, si empieza a las 09:00 termina a las 09:30. Otro turno puede empezar justo a las 09:30.</p>
       <button type="submit">Pedir turno</button>
     </form>
   </section>
@@ -44,11 +99,37 @@
   <section id="espera">
     <h2>Espera</h2>
     <form id="form-espera">
-      <label>Paciente <input name="pacienteId" value="2" required></label>
-      <label>Profesional <input name="profesionalId" value="1" required></label>
-      <label>Sillón <input name="sillonId" value="1" required></label>
-      <label>Prestación <input name="prestacionId" value="1" required></label>
-      <label>Inicio <input name="inicio" value="2026-11-02T09:00:00-03:00" required></label>
+      <label>Paciente
+        <select name="pacienteId" required>
+          <option value="1">1 — Carla Pérez</option>
+          <option value="2" selected>2 — Diego Ruiz</option>
+        </select>
+      </label>
+      <label>Profesional
+        <select name="profesionalId" required>
+          <option value="1" selected>1 — Ana Gómez (se puede usar)</option>
+          <option value="2">2 — Bruno Díaz (se puede usar)</option>
+          <option value="3">3 — Eva Sosa (inactiva, se rechaza)</option>
+        </select>
+      </label>
+      <label>Sillón
+        <select name="sillonId" required>
+          <option value="1" selected>1 — BOX-1 (se puede usar)</option>
+          <option value="2">2 — BOX-2 (se puede usar)</option>
+          <option value="3">3 — BOX-X (fuera de servicio, se rechaza)</option>
+        </select>
+      </label>
+      <label>Prestación
+        <select name="prestacionId" required>
+          <option value="1" selected>1 — Limpieza, 30 minutos</option>
+          <option value="2">2 — Consulta, 20 minutos</option>
+          <option value="3">3 — Extracción, 40 minutos</option>
+          <option value="4">4 — Endodoncia, 60 minutos</option>
+          <option value="5">5 — Retirada (inactiva, se rechaza)</option>
+        </select>
+      </label>
+      <label>Día <input name="dia" type="date" value="2026-11-02" required></label>
+      <label>Hora <input name="hora" type="time" value="09:00" step="60" required></label>
       <button type="submit">Anotar espera</button>
     </form>
     <button type="button" id="asignar">Asignar la primera que entre</button>
@@ -68,18 +149,88 @@
       const respuesta = await fetch(url, opciones);
       const cuerpo = await respuesta.json().catch(() => ({}));
       if (!respuesta.ok) {
-        const detalle = cuerpo.detail && cuerpo.detail.mensaje ? cuerpo.detail.mensaje : respuesta.status;
+        const pistas = {
+          "El paciente indicado no existe.": "Ese paciente no está en la tabla. Usá 1 (Carla Pérez) o 2 (Diego Ruiz).",
+          "El profesional indicado no existe.": "Ese profesional no está en la tabla. El 1 y el 2 se pueden usar. El 3 existe, pero está inactivo.",
+          "El sillón indicado no existe.": "Ese sillón no está en la tabla. El 1 y el 2 se pueden usar. El 3 existe, pero está fuera de servicio.",
+          "La prestación indicada no existe.": "Esa prestación no está en la tabla. De la 1 a la 4 se pueden usar. La 5 está inactiva.",
+          "El profesional no está activo.": "Eva Sosa es la profesional 3 y está inactiva. Elegí 1 (Ana Gómez) o 2 (Bruno Díaz).",
+          "El sillón no está activo.": "BOX-X es el sillón 3 y está fuera de servicio. Elegí 1 o 2.",
+          "La prestación no está activa.": "La prestación 5 está retirada. Elegí de la 1 a la 4."
+        };
+        const mensaje = cuerpo.detail && cuerpo.detail.mensaje ? cuerpo.detail.mensaje : String(respuesta.status);
+        const detalle = pistas[mensaje] ? mensaje + " " + pistas[mensaje] : mensaje;
         throw new Error(String(detalle));
       }
       return cuerpo;
+    }
+    const catalogo = {
+      pacientes: { 1: "Carla Pérez", 2: "Diego Ruiz" },
+      profesionales: { 1: "Ana Gómez", 2: "Bruno Díaz", 3: "Eva Sosa" },
+      sillones: { 1: "BOX-1", 2: "BOX-2", 3: "BOX-X" },
+      prestaciones: {
+        1: "Limpieza, 30 minutos",
+        2: "Consulta, 20 minutos",
+        3: "Extracción, 40 minutos",
+        4: "Endodoncia, 60 minutos",
+        5: "Prestación retirada"
+      },
+      estados: {
+        PENDIENTE: "Pendiente",
+        CONFIRMADO: "Confirmado",
+        CANCELADO: "Cancelado",
+        REALIZADO: "Realizado",
+        AUSENTE: "Ausente"
+      }
+    };
+    function nombre(mapa, id) {
+      return mapa[id] || ("número " + id);
+    }
+    function horaArgentina(iso) {
+      return new Intl.DateTimeFormat("es-AR", {
+        timeZone: "America/Argentina/Buenos_Aires",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23"
+      }).format(new Date(iso));
+    }
+    function fechaArgentina(iso) {
+      return new Intl.DateTimeFormat("es-AR", {
+        timeZone: "America/Argentina/Buenos_Aires",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      }).format(new Date(iso));
+    }
+    function inicioArgentina(datos) {
+      const hora = datos.hora.length === 5 ? datos.hora + ":00" : datos.hora;
+      return datos.dia + "T" + hora + "-03:00";
+    }
+    function linea(texto) {
+      const parrafo = document.createElement("p");
+      parrafo.textContent = texto;
+      return parrafo;
     }
     async function cargarAgenda() {
       const turnos = await leer("/api/turnos");
       const lista = document.querySelector("#lista");
       lista.innerHTML = "";
+      if (turnos.length === 0) {
+        const vacia = document.createElement("li");
+        vacia.append(linea("Todavía no hay turnos."));
+        lista.append(vacia);
+        return;
+      }
       turnos.forEach((turno) => {
         const item = document.createElement("li");
-        item.textContent = "#" + turno.id + " paciente " + turno.pacienteId + " " + turno.estado + " " + turno.inicio;
+        item.append(
+          linea("Turno " + turno.id + " · " + nombre(catalogo.estados, turno.estado)),
+          linea("Paciente: " + nombre(catalogo.pacientes, turno.pacienteId)),
+          linea("Profesional: " + nombre(catalogo.profesionales, turno.profesionalId)),
+          linea("Sillón: " + nombre(catalogo.sillones, turno.sillonId)),
+          linea("Prestación: " + nombre(catalogo.prestaciones, turno.prestacionId)),
+          linea(fechaArgentina(turno.inicio) + ", de " + horaArgentina(turno.inicio) + " a " + horaArgentina(turno.fin) + " (hora Argentina)")
+        );
         const cancelar = document.createElement("button");
         cancelar.type = "button";
         cancelar.textContent = "Cancelar";
@@ -110,10 +261,11 @@
             profesionalId: Number(datos.profesionalId),
             sillonId: Number(datos.sillonId),
             prestacionId: Number(datos.prestacionId),
-            inicio: datos.inicio
+            inicio: inicioArgentina(datos)
           })
         });
-        aviso.textContent = "Turno " + turno.id + " creado.";
+        aviso.textContent = "Turno " + turno.id + " creado. Mirá el detalle en Agenda.";
+        cargarAgenda();
       } catch (error) {
         aviso.textContent = error.message;
       }
@@ -124,7 +276,14 @@
       lista.innerHTML = "";
       esperas.forEach((espera) => {
         const item = document.createElement("li");
-        item.textContent = "Espera #" + espera.id + " paciente " + espera.pacienteId;
+        item.append(
+          linea("Espera " + espera.id),
+          linea("Paciente: " + nombre(catalogo.pacientes, espera.pacienteId)),
+          linea("Profesional: " + nombre(catalogo.profesionales, espera.profesionalId)),
+          linea("Sillón: " + nombre(catalogo.sillones, espera.sillonId)),
+          linea("Prestación: " + nombre(catalogo.prestaciones, espera.prestacionId)),
+          linea(fechaArgentina(espera.inicio) + ", " + horaArgentina(espera.inicio) + " (hora Argentina). Todavía no es un turno.")
+        );
         lista.append(item);
       });
     }
@@ -140,7 +299,7 @@
             profesionalId: Number(datos.profesionalId),
             sillonId: Number(datos.sillonId),
             prestacionId: Number(datos.prestacionId),
-            inicio: datos.inicio
+            inicio: inicioArgentina(datos)
           })
         });
         aviso.textContent = "Anotado en espera. Todavía no hay turno.";

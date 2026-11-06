@@ -95,3 +95,30 @@ def test_panel_muestra_las_tres_paginas():
     assert respuesta.status_code == 200
     texto = respuesta.text
     assert "Agenda" in texto and "Reserva" in texto and "Espera" in texto
+    assert "Carla Pérez" in texto and "Eva Sosa" in texto and "fuera de servicio" in texto
+
+
+def test_panel_explica_catalogo_horario_rechazo_y_borde():
+    http = cliente()
+    texto = http.get("/panel/").text
+    assert "Qué número se puede usar" in texto
+    assert "paciente 5" in texto
+    assert 'type="date"' in texto and 'type="time"' in texto
+    assert "America/Argentina/Buenos_Aires" in texto
+    assert "-03:00" in texto
+    assert 'name="fin"' not in texto
+    assert "09:30" in texto
+    assert "El profesional no está activo." in texto
+
+    valida = http.post("/api/public/turnos", json=reserva())
+    assert valida.status_code == 201
+    assert valida.json()["fin"] == "2026-11-02T12:30:00Z"
+    assert http.post("/api/public/turnos", json=reserva(pacienteId=2, sillonId=2, inicio="2026-11-02T09:15:00-03:00")).status_code == 409
+    assert http.post("/api/public/turnos", json=reserva(pacienteId=2, profesionalId=2, inicio="2026-11-02T09:15:00-03:00")).status_code == 409
+    assert http.post("/api/public/turnos", json=reserva(pacienteId=2, inicio="2026-11-02T09:15:00-03:00")).status_code == 409
+    encadenado = http.post("/api/public/turnos", json=reserva(pacienteId=2, inicio="2026-11-02T09:30:00-03:00"))
+    assert encadenado.status_code == 201
+    inactiva = http.post("/api/public/turnos", json=reserva(profesionalId=3, inicio="2026-11-02T15:00:00-03:00"))
+    assert inactiva.status_code == 422
+    assert inactiva.json()["detail"]["mensaje"] == "El profesional no está activo."
+    assert inactiva.json()["detail"]["mensaje"] in texto

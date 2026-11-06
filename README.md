@@ -73,6 +73,8 @@ Reiniciar el proceso borra las reservas y vuelve a cargar el catálogo ficticio.
 
 Pantalla: http://127.0.0.1:8000/panel/
 
+En Reserva y en Espera se elige el día y la hora de Argentina. El panel arma el inicio con zona `-03:00`. La agenda muestra el nombre de cada recurso y el intervalo en hora Argentina. La tabla de arriba dice qué número existe y cuál se rechaza. Swagger sigue pidiendo el inicio en ISO 8601.
+
 Swagger: http://127.0.0.1:8000/docs
 
 ## Skill propia y MCP
